@@ -62,6 +62,7 @@ export enum DefaultAppBarAction {
   SETTINGS = 'SETTINGS',
   USER = 'USER',
   GLOBAL_SEARCH = 'GLOBAL_SEARCH',
+  PROJECT = 'PROJECT',
 }
 
 type HeaderActionFuncType = (

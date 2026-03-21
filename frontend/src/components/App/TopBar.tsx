@@ -50,6 +50,7 @@ import { SettingsButton } from '../App/Settings';
 import { ClusterTitle } from '../cluster/Chooser';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { GlobalSearch } from '../globalSearch/GlobalSearch';
+import { ProjectSelector } from '../project/ProjectSelector';
 import HeadlampButton from '../Sidebar/HeadlampButton';
 import { setWhetherSidebarOpen } from '../Sidebar/sidebarSlice';
 import { AppLogo } from './AppLogo';
@@ -447,6 +448,10 @@ export const PureTopBar = memo(
       {
         id: DefaultAppBarAction.GLOBAL_SEARCH,
         action: <GlobalSearch />,
+      },
+      {
+        id: DefaultAppBarAction.PROJECT,
+        action: <ProjectSelector />,
       },
       {
         id: DefaultAppBarAction.CLUSTER,
