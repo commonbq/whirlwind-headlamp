@@ -1,7 +1,15 @@
 {
-  "name": "knative",
+  "name": "@headlamp-k8s/knative",
+  "author": "Headlamp Contributors",
+  "license": "Apache-2.0",
   "version": "0.1.0",
   "description": "KNative plugin for Headlamp. Provides a UI for managing KNative Serving and Eventing resources, inspired by GCP Cloud Run.",
+  "homepage": "https://github.com/commonbq/whirlwind-headlamp/tree/main/plugins/examples/knative",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/commonbq/whirlwind-headlamp.git",
+    "directory": "plugins/examples/knative"
+  },
   "scripts": {
     "start": "headlamp-plugin start",
     "build": "headlamp-plugin build",
