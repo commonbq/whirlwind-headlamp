@@ -109,7 +109,7 @@ config:
 
   # -- directory to look for plugins
   pluginsDir: "/headlamp/plugins"
-  enableHelm: false
+  enableHelm: true
   watchPlugins: false
   # tlsCertPath: "/headlamp-cert/headlamp-ca.crt"
   # tlsKeyPath: "/headlamp-cert/headlamp-tls.key"

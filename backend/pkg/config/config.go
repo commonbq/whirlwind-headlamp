@@ -451,7 +451,7 @@ func addGeneralFlags(f *flag.FlagSet) {
 	f.String("listen-addr", "", "Address to listen on; default is empty, which means listening to any address")
 	f.Uint("port", defaultPort, "Port to listen from")
 	f.String("proxy-urls", "", "Allow proxy requests to specified URLs")
-	f.Bool("enable-helm", false, "Enable Helm operations")
+	f.Bool("enable-helm", true, "Enable Helm operations")
 }
 
 func addOIDCFlags(f *flag.FlagSet) {
