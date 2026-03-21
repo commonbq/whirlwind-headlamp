@@ -329,7 +329,7 @@ priorityClassName: ""
 # Plugin Manager Sidecar Container Configuration
 pluginsManager:
   # -- Enable plugin manager
-  enabled: false
+  enabled: true
   # -- Plugin configuration file name
   configFile: "plugin.yml"
   # -- Plugin configuration content in YAML format. This is required if plugins.enabled is true.
