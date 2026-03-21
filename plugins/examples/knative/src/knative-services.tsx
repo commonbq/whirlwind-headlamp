@@ -37,9 +37,11 @@ import { useHistory } from 'react-router';
 import {
   formatAge,
   getReadyStatus,
+  isKNativeNotInstalled,
   KNativeService,
   useKNativeList,
 } from './common';
+import KNativeInstaller from './knative-installer';
 
 function getServiceDetailPath(namespace: string, name: string): string {
   return `/knative/services/${namespace}/${name}`;
@@ -47,11 +49,16 @@ function getServiceDetailPath(namespace: string, name: string): string {
 
 export default function KNativeServicesList() {
   const history = useHistory();
-  const { items: services, error, reload } = useKNativeList<KNativeService>(
-    '/apis/serving.knative.dev/v1/services'
-  );
+  const {
+    items: services,
+    error,
+    reload,
+  } = useKNativeList<KNativeService>('/apis/serving.knative.dev/v1/services');
 
   if (error) {
+    if (isKNativeNotInstalled(error)) {
+      return <KNativeInstaller onInstalled={reload} />;
+    }
     return (
       <SectionBox title="KNative Services">
         <Alert severity="warning" sx={{ mb: 2 }}>
@@ -95,19 +102,32 @@ export default function KNativeServicesList() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell><strong>Name</strong></TableCell>
-                <TableCell><strong>Namespace</strong></TableCell>
-                <TableCell><strong>Status</strong></TableCell>
-                <TableCell><strong>URL</strong></TableCell>
-                <TableCell><strong>Latest Revision</strong></TableCell>
-                <TableCell><strong>Age</strong></TableCell>
+                <TableCell>
+                  <strong>Name</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Namespace</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Status</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>URL</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Latest Revision</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Age</strong>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {services.map(svc => {
                 const readyStatus = getReadyStatus(svc.status?.conditions);
                 const url = svc.status?.url;
-                const latestRevision = svc.status?.latestReadyRevisionName ?? svc.status?.latestCreatedRevisionName;
+                const latestRevision =
+                  svc.status?.latestReadyRevisionName ?? svc.status?.latestCreatedRevisionName;
                 const detailUrl = getServiceDetailPath(svc.metadata.namespace, svc.metadata.name);
 
                 return (
@@ -131,11 +151,18 @@ export default function KNativeServicesList() {
                     </TableCell>
                     <TableCell>
                       {url ? (
-                        <Link href={url} target="_blank" rel="noopener noreferrer" underline="hover">
+                        <Link
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          underline="hover"
+                        >
                           {url}
                         </Link>
                       ) : (
-                        <Typography variant="body2" color="text.secondary">—</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          —
+                        </Typography>
                       )}
                     </TableCell>
                     <TableCell>

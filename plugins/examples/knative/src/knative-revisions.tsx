@@ -31,17 +31,24 @@ import React from 'react';
 import {
   formatAge,
   getReadyStatus,
+  isKNativeNotInstalled,
   KNativeRevision,
   useKNativeList,
 } from './common';
+import KNativeInstaller from './knative-installer';
 import { ReadyChip } from './knative-services';
 
 export default function KNativeRevisionsList() {
-  const { items: revisions, error } = useKNativeList<KNativeRevision>(
-    '/apis/serving.knative.dev/v1/revisions'
-  );
+  const {
+    items: revisions,
+    error,
+    reload,
+  } = useKNativeList<KNativeRevision>('/apis/serving.knative.dev/v1/revisions');
 
   if (error) {
+    if (isKNativeNotInstalled(error)) {
+      return <KNativeInstaller onInstalled={reload} />;
+    }
     return (
       <SectionBox title="KNative Revisions">
         <Alert severity="warning">{error}</Alert>
@@ -60,32 +67,46 @@ export default function KNativeRevisionsList() {
   }
 
   // Sort newest first
-  const sorted = revisions.slice().sort(
-    (a, b) =>
-      new Date(b.metadata.creationTimestamp).getTime() -
-      new Date(a.metadata.creationTimestamp).getTime()
-  );
+  const sorted = revisions
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(b.metadata.creationTimestamp).getTime() -
+        new Date(a.metadata.creationTimestamp).getTime()
+    );
 
   return (
     <SectionBox title="KNative Revisions">
       {sorted.length === 0 ? (
         <Box p={4} textAlign="center">
-          <Typography color="text.secondary">
-            No KNative revisions found.
-          </Typography>
+          <Typography color="text.secondary">No KNative revisions found.</Typography>
         </Box>
       ) : (
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell><strong>Name</strong></TableCell>
-                <TableCell><strong>Namespace</strong></TableCell>
-                <TableCell><strong>Service</strong></TableCell>
-                <TableCell><strong>Status</strong></TableCell>
-                <TableCell><strong>Image</strong></TableCell>
-                <TableCell><strong>Concurrency</strong></TableCell>
-                <TableCell><strong>Age</strong></TableCell>
+                <TableCell>
+                  <strong>Name</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Namespace</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Service</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Status</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Image</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Concurrency</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Age</strong>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -131,7 +152,11 @@ export default function KNativeRevisionsList() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      {concurrency === undefined ? '—' : concurrency === 0 ? 'Unlimited' : concurrency}
+                      {concurrency === undefined
+                        ? '—'
+                        : concurrency === 0
+                        ? 'Unlimited'
+                        : concurrency}
                     </TableCell>
                     <TableCell>{formatAge(rev.metadata.creationTimestamp)}</TableCell>
                   </TableRow>

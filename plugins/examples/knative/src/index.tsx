@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  registerRoute,
-  registerSidebarEntry,
-} from '@kinvolk/headlamp-plugin/lib';
+import { registerRoute, registerSidebarEntry } from '@kinvolk/headlamp-plugin/lib';
 import React from 'react';
 import KNativeEventing from './knative-eventing';
 import KNativeRevisionsList from './knative-revisions';

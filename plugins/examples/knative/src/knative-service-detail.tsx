@@ -81,9 +81,7 @@ export default function KNativeServiceDetail() {
   // Filter revisions belonging to this service
   const serviceRevisions = (revisions ?? []).filter(
     rev =>
-      rev.metadata.ownerReferences?.some(
-        ref => ref.kind === 'Service' && ref.name === name
-      ) ||
+      rev.metadata.ownerReferences?.some(ref => ref.kind === 'Service' && ref.name === name) ||
       rev.metadata.labels?.['serving.knative.dev/service'] === name
   );
 
@@ -124,9 +122,7 @@ export default function KNativeServiceDetail() {
             <Typography variant="caption" color="text.secondary">
               Age
             </Typography>
-            <Typography variant="body2">
-              {formatAge(service.metadata.creationTimestamp)}
-            </Typography>
+            <Typography variant="body2">{formatAge(service.metadata.creationTimestamp)}</Typography>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <Typography variant="caption" color="text.secondary">
@@ -229,8 +225,12 @@ export default function KNativeServiceDetail() {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell><strong>Name</strong></TableCell>
-                      <TableCell><strong>Value</strong></TableCell>
+                      <TableCell>
+                        <strong>Name</strong>
+                      </TableCell>
+                      <TableCell>
+                        <strong>Value</strong>
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -266,10 +266,18 @@ export default function KNativeServiceDetail() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell><strong>Revision</strong></TableCell>
-                  <TableCell><strong>Traffic %</strong></TableCell>
-                  <TableCell><strong>Tag</strong></TableCell>
-                  <TableCell><strong>URL</strong></TableCell>
+                  <TableCell>
+                    <strong>Revision</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Traffic %</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Tag</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>URL</strong>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -277,7 +285,9 @@ export default function KNativeServiceDetail() {
                   <TableRow key={idx}>
                     <TableCell>
                       <Typography variant="body2" fontFamily="monospace">
-                        {t.latestRevision ? `${t.revisionName ?? 'latest'} (latest)` : (t.revisionName ?? '—')}
+                        {t.latestRevision
+                          ? `${t.revisionName ?? 'latest'} (latest)`
+                          : t.revisionName ?? '—'}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -291,15 +301,16 @@ export default function KNativeServiceDetail() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      {t.tag ? (
-                        <Chip label={t.tag} size="small" variant="outlined" />
-                      ) : (
-                        '—'
-                      )}
+                      {t.tag ? <Chip label={t.tag} size="small" variant="outlined" /> : '—'}
                     </TableCell>
                     <TableCell>
                       {t.url ? (
-                        <Link href={t.url} target="_blank" rel="noopener noreferrer" underline="hover">
+                        <Link
+                          href={t.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          underline="hover"
+                        >
                           {t.url}
                         </Link>
                       ) : (
@@ -324,10 +335,18 @@ export default function KNativeServiceDetail() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell><strong>Type</strong></TableCell>
-                  <TableCell><strong>Status</strong></TableCell>
-                  <TableCell><strong>Reason</strong></TableCell>
-                  <TableCell><strong>Message</strong></TableCell>
+                  <TableCell>
+                    <strong>Type</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Status</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Reason</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Message</strong>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -337,7 +356,13 @@ export default function KNativeServiceDetail() {
                     <TableCell>
                       <Chip
                         label={cond.status}
-                        color={cond.status === 'True' ? 'success' : cond.status === 'False' ? 'error' : 'default'}
+                        color={
+                          cond.status === 'True'
+                            ? 'success'
+                            : cond.status === 'False'
+                            ? 'error'
+                            : 'default'
+                        }
                         size="small"
                       />
                     </TableCell>
@@ -370,10 +395,18 @@ export default function KNativeServiceDetail() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell><strong>Name</strong></TableCell>
-                  <TableCell><strong>Status</strong></TableCell>
-                  <TableCell><strong>Image</strong></TableCell>
-                  <TableCell><strong>Age</strong></TableCell>
+                  <TableCell>
+                    <strong>Name</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Status</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Image</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Age</strong>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -396,7 +429,12 @@ export default function KNativeServiceDetail() {
                               {rev.metadata.name}
                             </Typography>
                             {isLatest && (
-                              <Chip label="latest" size="small" color="primary" variant="outlined" />
+                              <Chip
+                                label="latest"
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                              />
                             )}
                           </Box>
                         </TableCell>

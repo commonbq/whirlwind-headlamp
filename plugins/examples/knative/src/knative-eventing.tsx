@@ -31,19 +31,37 @@ import React from 'react';
 import {
   formatAge,
   getReadyStatus,
+  isKNativeNotInstalled,
   KNativeBroker,
   KNativeTrigger,
   useKNativeList,
 } from './common';
+import KNativeInstaller from './knative-installer';
 import { ReadyChip } from './knative-services';
 
 export default function KNativeEventing() {
-  const { items: brokers, error: brokersError } = useKNativeList<KNativeBroker>(
-    '/apis/eventing.knative.dev/v1/brokers'
-  );
-  const { items: triggers, error: triggersError } = useKNativeList<KNativeTrigger>(
-    '/apis/eventing.knative.dev/v1/triggers'
-  );
+  const {
+    items: brokers,
+    error: brokersError,
+    reload: reloadBrokers,
+  } = useKNativeList<KNativeBroker>('/apis/eventing.knative.dev/v1/brokers');
+  const {
+    items: triggers,
+    error: triggersError,
+    reload: reloadTriggers,
+  } = useKNativeList<KNativeTrigger>('/apis/eventing.knative.dev/v1/triggers');
+
+  // Show the installer when Eventing CRDs are missing.
+  if (isKNativeNotInstalled(brokersError) || isKNativeNotInstalled(triggersError)) {
+    return (
+      <KNativeInstaller
+        onInstalled={() => {
+          reloadBrokers();
+          reloadTriggers();
+        }}
+      />
+    );
+  }
 
   return (
     <SectionBox title="KNative Eventing">
@@ -71,11 +89,21 @@ export default function KNativeEventing() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell><strong>Name</strong></TableCell>
-                <TableCell><strong>Namespace</strong></TableCell>
-                <TableCell><strong>Status</strong></TableCell>
-                <TableCell><strong>Address URL</strong></TableCell>
-                <TableCell><strong>Age</strong></TableCell>
+                <TableCell>
+                  <strong>Name</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Namespace</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Status</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Address URL</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Age</strong>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -95,7 +123,11 @@ export default function KNativeEventing() {
                     </TableCell>
                     <TableCell>
                       {addressUrl ? (
-                        <Typography variant="body2" fontFamily="monospace" sx={{ wordBreak: 'break-all' }}>
+                        <Typography
+                          variant="body2"
+                          fontFamily="monospace"
+                          sx={{ wordBreak: 'break-all' }}
+                        >
                           {addressUrl}
                         </Typography>
                       ) : (
@@ -135,22 +167,35 @@ export default function KNativeEventing() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell><strong>Name</strong></TableCell>
-                <TableCell><strong>Namespace</strong></TableCell>
-                <TableCell><strong>Broker</strong></TableCell>
-                <TableCell><strong>Status</strong></TableCell>
-                <TableCell><strong>Subscriber</strong></TableCell>
-                <TableCell><strong>Filter</strong></TableCell>
-                <TableCell><strong>Age</strong></TableCell>
+                <TableCell>
+                  <strong>Name</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Namespace</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Broker</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Status</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Subscriber</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Filter</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Age</strong>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {triggers.map(trigger => {
                 const readyStatus = getReadyStatus(trigger.status?.conditions);
-                const subscriber =
-                  trigger.spec?.subscriber?.ref
-                    ? `${trigger.spec.subscriber.ref.kind}/${trigger.spec.subscriber.ref.name}`
-                    : (trigger.spec?.subscriber?.uri ?? '—');
+                const subscriber = trigger.spec?.subscriber?.ref
+                  ? `${trigger.spec.subscriber.ref.kind}/${trigger.spec.subscriber.ref.name}`
+                  : trigger.spec?.subscriber?.uri ?? '—';
                 const filterAttrs = trigger.spec?.filter?.attributes;
                 return (
                   <TableRow key={trigger.metadata.uid} hover>
