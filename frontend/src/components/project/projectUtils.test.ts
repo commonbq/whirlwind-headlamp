@@ -22,9 +22,10 @@ import Pod from '../../lib/k8s/pod';
 import StatefulSet from '../../lib/k8s/statefulSet';
 import {
   getHealthIcon,
+  getProjectIdFromLabelKey,
+  getProjectLabelKey,
   getResourcesByKind,
   getResourcesHealth,
-  PROJECT_ID_LABEL,
   toKubernetesName,
 } from './projectUtils';
 
@@ -153,6 +154,31 @@ function makePod(params: {
   );
 }
 
+describe('getProjectLabelKey', () => {
+  it('generates a label key with the project prefix', () => {
+    expect(getProjectLabelKey('my-app')).toBe('headlamp.dev/project-my-app');
+  });
+
+  it('includes the full project id in the key', () => {
+    expect(getProjectLabelKey('team-alpha')).toBe('headlamp.dev/project-team-alpha');
+  });
+});
+
+describe('getProjectIdFromLabelKey', () => {
+  it('extracts project id from a valid project label key', () => {
+    expect(getProjectIdFromLabelKey('headlamp.dev/project-my-app')).toBe('my-app');
+  });
+
+  it('returns null for unrelated label keys', () => {
+    expect(getProjectIdFromLabelKey('app')).toBeNull();
+    expect(getProjectIdFromLabelKey('headlamp.dev/other-label')).toBeNull();
+  });
+
+  it('returns null for an empty string', () => {
+    expect(getProjectIdFromLabelKey('')).toBeNull();
+  });
+});
+
 describe('getHealthIcon', () => {
   it('returns help icon when total is 0', () => {
     expect(getHealthIcon(0, 0, 0)).toBe('mdi:help-circle');
@@ -246,12 +272,12 @@ describe('project name duplicate detection helper', () => {
   ): Set<string> {
     const result = new Set<string>();
     for (const ns of namespaces) {
-      const labelValue = ns.labels?.[PROJECT_ID_LABEL];
-      if (!labelValue) {
-        continue;
+      for (const labelKey of Object.keys(ns.labels ?? {})) {
+        const projectId = getProjectIdFromLabelKey(labelKey);
+        if (projectId) {
+          result.add(projectId);
+        }
       }
-      result.add(labelValue);
-      result.add(toKubernetesName(labelValue));
     }
     return result;
   }
@@ -264,8 +290,8 @@ describe('project name duplicate detection helper', () => {
 
   it('collects project names from namespace labels', () => {
     const namespaces = [
-      { name: 'project-a-ns', labels: { [PROJECT_ID_LABEL]: 'project-a' } },
-      { name: 'project-b-ns', labels: { [PROJECT_ID_LABEL]: 'project-b' } },
+      { name: 'project-a-ns', labels: { [getProjectLabelKey('project-a')]: 'true' } },
+      { name: 'project-b-ns', labels: { [getProjectLabelKey('project-b')]: 'true' } },
       { name: 'default' },
     ];
     const result = buildExistingProjectNames(namespaces);
@@ -274,16 +300,15 @@ describe('project name duplicate detection helper', () => {
     expect(result.has('default')).toBe(false);
   });
 
-  it('stores both raw label and kubernetes-normalized form', () => {
-    const namespaces = [{ name: 'my-project-ns', labels: { [PROJECT_ID_LABEL]: 'My Project' } }];
+  it('extracts project id from label key', () => {
+    const namespaces = [{ name: 'my-project-ns', labels: { [getProjectLabelKey('my-project')]: 'true' } }];
     const result = buildExistingProjectNames(namespaces);
-    expect(result.has('My Project')).toBe(true);
     expect(result.has('my-project')).toBe(true);
   });
 
   it('detects duplicate when user enters existing project name', () => {
     const namespaces = [
-      { name: 'existing-ns', labels: { [PROJECT_ID_LABEL]: 'existing-project' } },
+      { name: 'existing-ns', labels: { [getProjectLabelKey('existing-project')]: 'true' } },
     ];
     const existingProjectNames = buildExistingProjectNames(namespaces);
 
@@ -293,7 +318,7 @@ describe('project name duplicate detection helper', () => {
   });
 
   it('detects duplicate when user enters name that normalizes to existing project', () => {
-    const namespaces = [{ name: 'my-project-ns', labels: { [PROJECT_ID_LABEL]: 'my-project' } }];
+    const namespaces = [{ name: 'my-project-ns', labels: { [getProjectLabelKey('my-project')]: 'true' } }];
     const existingProjectNames = buildExistingProjectNames(namespaces);
 
     const userInput = 'My Project';
@@ -305,7 +330,7 @@ describe('project name duplicate detection helper', () => {
 
   it('allows new unique project names', () => {
     const namespaces = [
-      { name: 'existing-ns', labels: { [PROJECT_ID_LABEL]: 'existing-project' } },
+      { name: 'existing-ns', labels: { [getProjectLabelKey('existing-project')]: 'true' } },
     ];
     const existingProjectNames = buildExistingProjectNames(namespaces);
 
@@ -316,7 +341,7 @@ describe('project name duplicate detection helper', () => {
 
   it('returns false for empty project name', () => {
     const namespaces = [
-      { name: 'existing-ns', labels: { [PROJECT_ID_LABEL]: 'existing-project' } },
+      { name: 'existing-ns', labels: { [getProjectLabelKey('existing-project')]: 'true' } },
     ];
     const existingProjectNames = buildExistingProjectNames(namespaces);
 

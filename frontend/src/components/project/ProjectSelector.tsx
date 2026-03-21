@@ -34,7 +34,6 @@ import ListItemText from '@mui/material/ListItemText';
 import Popover from '@mui/material/Popover';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { groupBy, uniq } from 'lodash';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
@@ -47,7 +46,7 @@ import Namespace from '../../lib/k8s/namespace';
 import { createRouteURL } from '../../lib/router/createRouteURL';
 import { useTypedSelector } from '../../redux/hooks';
 import { ProjectDefinition, setSelectedProject } from '../../redux/projectsSlice';
-import { PROJECT_ID_LABEL, toKubernetesName } from './projectUtils';
+import { getProjectIdFromLabelKey, getProjectLabelKey, toKubernetesName } from './projectUtils';
 
 /**
  * Fetches and returns all available projects.
@@ -58,23 +57,28 @@ function useProjects(): ProjectDefinition[] {
 
   const { items: namespaces } = Namespace.useList({
     clusters: clusters.map(c => c.name),
-    labelSelector: PROJECT_ID_LABEL,
   });
 
-  return useMemo(
-    () =>
-      Object.entries(
-        groupBy(
-          (namespaces ?? []).filter(n => n.metadata.labels?.[PROJECT_ID_LABEL]),
-          n => n.metadata.labels![PROJECT_ID_LABEL]
-        )
-      ).map(([name, nsList]) => ({
-        id: name,
-        namespaces: uniq(nsList.map(it => it.metadata.name)),
-        clusters: uniq(nsList.map(it => it.cluster)),
-      })),
-    [namespaces]
-  );
+  return useMemo(() => {
+    const projectMap = new Map<string, { namespaces: Set<string>; clusters: Set<string> }>();
+    for (const ns of namespaces ?? []) {
+      for (const labelKey of Object.keys(ns.metadata.labels ?? {})) {
+        const projectId = getProjectIdFromLabelKey(labelKey);
+        if (!projectId) continue;
+        if (!projectMap.has(projectId)) {
+          projectMap.set(projectId, { namespaces: new Set(), clusters: new Set() });
+        }
+        const project = projectMap.get(projectId)!;
+        project.namespaces.add(ns.metadata.name);
+        project.clusters.add(ns.cluster);
+      }
+    }
+    return Array.from(projectMap.entries()).map(([id, { namespaces, clusters }]) => ({
+      id,
+      namespaces: Array.from(namespaces),
+      clusters: Array.from(clusters),
+    }));
+  }, [namespaces]);
 }
 
 /**
@@ -111,13 +115,13 @@ function CreateProjectDialog({ open, onClose }: { open: boolean; onClose: () => 
           apiVersion: 'v1',
           metadata: {
             name: namespaceName,
-            labels: { [PROJECT_ID_LABEL]: projectName },
+            labels: { [getProjectLabelKey(namespaceName)]: 'true' },
           } as any,
         };
         await apply(ns, cluster.name);
       }
       handleClose();
-      history.push(createRouteURL('projectDetails', { name: projectName }));
+      history.push(createRouteURL('projectDetails', { name: namespaceName }));
     } catch (e: any) {
       setError(e);
     } finally {

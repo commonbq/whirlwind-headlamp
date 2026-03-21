@@ -20,7 +20,7 @@ import { http, HttpResponse } from 'msw';
 import reducers from '../../redux/reducers/reducers';
 import { TestContext } from '../../test';
 import { CreateNew } from './ProjectCreateFromYaml';
-import { PROJECT_ID_LABEL } from './projectUtils';
+import { getProjectLabelKey } from './projectUtils';
 
 export default {
   title: 'project/CreateFromYaml',
@@ -130,7 +130,7 @@ WithExistingProjects.parameters = {
                   name: 'existing-project',
                   uid: 'ns-1',
                   labels: {
-                    [PROJECT_ID_LABEL]: 'existing-project',
+                    [getProjectLabelKey('existing-project')]: 'true',
                   },
                 },
               },
@@ -141,7 +141,7 @@ WithExistingProjects.parameters = {
                   name: 'my-app',
                   uid: 'ns-2',
                   labels: {
-                    [PROJECT_ID_LABEL]: 'my-app',
+                    [getProjectLabelKey('my-app')]: 'true',
                   },
                 },
               },

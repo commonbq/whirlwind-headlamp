@@ -20,7 +20,19 @@ import { KubeObject } from '../../lib/k8s/KubeObject';
 import Namespace from '../../lib/k8s/namespace';
 import { getStatus, KubeObjectStatus } from '../resourceMap/nodes/KubeObjectStatus';
 
-export const PROJECT_ID_LABEL = 'headlamp.dev/project-id';
+/** Prefix for per-project Kubernetes labels. Each project uses its own label key: `headlamp.dev/project-<id>`. */
+export const PROJECT_LABEL_PREFIX = 'headlamp.dev/project-';
+
+/** Returns the Kubernetes label key for a specific project ID. */
+export const getProjectLabelKey = (projectId: string): string =>
+  `${PROJECT_LABEL_PREFIX}${projectId}`;
+
+/**
+ * Extracts the project ID from a Kubernetes label key.
+ * Returns null if the key does not match the project label prefix.
+ */
+export const getProjectIdFromLabelKey = (key: string): string | null =>
+  key.startsWith(PROJECT_LABEL_PREFIX) ? key.slice(PROJECT_LABEL_PREFIX.length) : null;
 
 export const getHealthIcon = (healthy: number, unhealthy: number, warning: number) => {
   if (healthy + unhealthy + warning === 0) return 'mdi:help-circle';

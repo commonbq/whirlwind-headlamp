@@ -21,7 +21,7 @@ import { useState } from 'react';
 import reducers from '../../redux/reducers/reducers';
 import { TestContext } from '../../test';
 import { NewProjectPopup } from './NewProjectPopup';
-import { PROJECT_ID_LABEL } from './projectUtils';
+import { getProjectLabelKey } from './projectUtils';
 
 export default {
   title: 'project/NewProjectPopup',
@@ -109,7 +109,7 @@ WithExistingProjects.parameters = {
                   name: 'existing-project',
                   uid: 'ns-1',
                   labels: {
-                    [PROJECT_ID_LABEL]: 'existing-project',
+                    [getProjectLabelKey('existing-project')]: 'true',
                   },
                 },
               },
@@ -120,7 +120,7 @@ WithExistingProjects.parameters = {
                   name: 'another-project',
                   uid: 'ns-2',
                   labels: {
-                    [PROJECT_ID_LABEL]: 'another-project',
+                    [getProjectLabelKey('another-project')]: 'true',
                   },
                 },
               },

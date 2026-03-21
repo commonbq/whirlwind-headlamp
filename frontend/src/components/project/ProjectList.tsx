@@ -16,7 +16,7 @@
 
 import { Icon } from '@iconify/react';
 import { Box, Button, Typography } from '@mui/material';
-import { groupBy, uniq } from 'lodash';
+import { uniq } from 'lodash';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useClustersConf } from '../../lib/k8s';
@@ -26,7 +26,12 @@ import { StatusLabel } from '../common';
 import Link from '../common/Link';
 import Table, { TableColumn } from '../common/Table/Table';
 import { NewProjectPopup } from './NewProjectPopup';
-import { getHealthIcon, getResourcesHealth, PROJECT_ID_LABEL } from './projectUtils';
+import {
+  getHealthIcon,
+  getProjectIdFromLabelKey,
+  getProjectLabelKey,
+  getResourcesHealth,
+} from './projectUtils';
 import { useProjectItems } from './useProjectResources';
 
 const useProjects = (): ProjectDefinition[] => {
@@ -35,20 +40,33 @@ const useProjects = (): ProjectDefinition[] => {
 
   const { items: namespaces } = Namespace.useList({
     clusters: clusters.map(c => c.name),
-    labelSelector: PROJECT_ID_LABEL,
   });
 
-  const projects = useMemo(
-    () =>
-      Object.entries(groupBy(namespaces, n => n.metadata.labels![PROJECT_ID_LABEL])).map(
-        ([name, namespaces]) => ({
-          id: name,
-          namespaces: uniq(namespaces.map(it => it.metadata.name)),
-          clusters: uniq(namespaces.map(it => it.cluster)),
-        })
-      ),
-    [namespaces]
-  );
+  const projects = useMemo(() => {
+    if (!namespaces) return [];
+
+    // Each project has its own label key: headlamp.dev/project-<id>
+    // Scan all namespace labels to discover project IDs.
+    const projectMap = new Map<string, { namespaces: Set<string>; clusters: Set<string> }>();
+    for (const ns of namespaces) {
+      for (const labelKey of Object.keys(ns.metadata.labels ?? {})) {
+        const projectId = getProjectIdFromLabelKey(labelKey);
+        if (!projectId) continue;
+        if (!projectMap.has(projectId)) {
+          projectMap.set(projectId, { namespaces: new Set(), clusters: new Set() });
+        }
+        const project = projectMap.get(projectId)!;
+        project.namespaces.add(ns.metadata.name);
+        project.clusters.add(ns.cluster);
+      }
+    }
+
+    return Array.from(projectMap.entries()).map(([id, { namespaces, clusters }]) => ({
+      id,
+      namespaces: Array.from(namespaces),
+      clusters: Array.from(clusters),
+    }));
+  }, [namespaces]);
 
   return projects;
 };
@@ -59,7 +77,7 @@ export const useProject = (name: string) => {
 
   const { items: namespaces, isLoading } = Namespace.useList({
     clusters: clusters.map(c => c.name),
-    labelSelector: PROJECT_ID_LABEL + '=' + name,
+    labelSelector: getProjectLabelKey(name),
   });
 
   return useMemo(

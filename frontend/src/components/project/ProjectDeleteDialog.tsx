@@ -33,7 +33,7 @@ import { ProjectDefinition } from '../../redux/projectsSlice';
 import { AppDispatch } from '../../redux/stores/store';
 import { DialogTitle } from '../common/Dialog';
 import AuthVisible from '../common/Resource/AuthVisible';
-import { PROJECT_ID_LABEL } from './projectUtils';
+import { getProjectLabelKey } from './projectUtils';
 
 interface ProjectDeleteDialogProps {
   open: boolean;
@@ -69,7 +69,7 @@ export function ProjectDeleteDialog({
               projectNamespaces.map(async namespace => {
                 const updatedData = { ...namespace.jsonData };
                 if (updatedData.metadata?.labels) {
-                  delete updatedData.metadata.labels[PROJECT_ID_LABEL];
+                  delete updatedData.metadata.labels[getProjectLabelKey(project.id)];
                   // If labels object becomes empty, remove it entirely
                   if (Object.keys(updatedData.metadata.labels).length === 0) {
                     delete updatedData.metadata.labels;

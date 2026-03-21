@@ -45,7 +45,7 @@ import { ViewYaml } from '../advancedSearch/ResourceSearch';
 import { DropZoneBox } from '../common/DropZoneBox';
 import Table from '../common/Table';
 import { KubeIcon } from '../resourceMap/kubeIcon/KubeIcon';
-import { PROJECT_ID_LABEL, toKubernetesName } from './projectUtils';
+import { getProjectIdFromLabelKey, getProjectLabelKey, toKubernetesName } from './projectUtils';
 
 async function createProjectFromYaml({
   items,
@@ -70,7 +70,7 @@ async function createProjectFromYaml({
     metadata: {
       name: k8sName,
       labels: {
-        [PROJECT_ID_LABEL]: k8sName,
+        [getProjectLabelKey(k8sName)]: 'true',
       },
     } as any,
   } as any;
@@ -124,31 +124,27 @@ export function CreateNew() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { items: allProjectNamespaces } = Namespace.useList({
+  const { items: allNamespaces } = Namespace.useList({
     clusters: allClusters ? Object.keys(allClusters) : [],
-    labelSelector: PROJECT_ID_LABEL,
   });
 
   const existingProjectNames = useMemo(() => {
     const result = new Set<string>();
-    if (!allProjectNamespaces) {
+    if (!allNamespaces) {
       return result;
     }
 
-    for (const ns of allProjectNamespaces) {
-      const labelValue = ns.metadata.labels?.[PROJECT_ID_LABEL];
-      if (!labelValue) {
-        continue;
+    for (const ns of allNamespaces) {
+      for (const labelKey of Object.keys(ns.metadata.labels ?? {})) {
+        const projectId = getProjectIdFromLabelKey(labelKey);
+        if (projectId) {
+          result.add(projectId);
+        }
       }
-
-      // Store both the raw label and its Kubernetes-normalized form so that
-      // duplicate detection works regardless of how PROJECT_ID_LABEL was set.
-      result.add(labelValue);
-      result.add(toKubernetesName(labelValue));
     }
 
     return result;
-  }, [allProjectNamespaces]);
+  }, [allNamespaces]);
 
   const projectNameExists = k8sName.length > 0 && existingProjectNames.has(k8sName);
 
