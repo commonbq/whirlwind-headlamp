@@ -27,7 +27,7 @@ The plugin adds a **KNative** top-level sidebar entry with sub-menus for Serving
 ## Running the Plugin
 
 ```bash
-cd plugins/examples/knative
+cd plugins/native/knative
 npm install
 npm start
 # Open Headlamp and look for "KNative" in the sidebar.
