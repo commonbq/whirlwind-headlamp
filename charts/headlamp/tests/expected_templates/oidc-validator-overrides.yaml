@@ -12,6 +12,24 @@ metadata:
     app.kubernetes.io/version: "0.40.0"
     app.kubernetes.io/managed-by: Helm
 ---
+# Source: headlamp/templates/plugin-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: headlamp-plugin-config
+  namespace: default
+  labels:
+    helm.sh/chart: headlamp-0.40.0
+    app.kubernetes.io/name: headlamp
+    app.kubernetes.io/instance: headlamp
+    app.kubernetes.io/version: "0.40.0"
+    app.kubernetes.io/managed-by: Helm
+data:
+  plugin.yml: |
+    plugins:
+      - name: plugin-catalog
+        source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp-plugin-catalog
+---
 # Source: headlamp/templates/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -116,6 +134,8 @@ spec:
           args:
             - "-in-cluster"
             - "-in-cluster-context-name=main"
+            - "-enable-helm"
+            - "-proxy-urls=https://artifacthub.io/*"
             - "-plugins-dir=/headlamp/plugins"
             - "-session-ttl=86400"
             # Check if externalSecret is disabled
@@ -147,3 +167,39 @@ spec:
               port: http
           resources:
             {}
+          volumeMounts:
+            - name: plugins-dir
+              mountPath: /headlamp/plugins
+        - name: headlamp-plugin
+          image: node:lts-alpine
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              if [ -f "/config/plugin.yml" ]; then
+                echo "Installing plugins from config..."
+                cat /config/plugin.yml
+                # Use a writable cache directory
+                export NPM_CONFIG_CACHE=/tmp/npm-cache
+                # Use a writable config directory
+                export NPM_CONFIG_USERCONFIG=/tmp/npm-userconfig
+                mkdir -p /tmp/npm-cache /tmp/npm-userconfig
+                npx --yes @headlamp-k8s/pluginctl@latest install --config /config/plugin.yml --folderName /headlamp/plugins --watch
+              fi
+          volumeMounts:
+            - name: plugins-dir
+              mountPath: /headlamp/plugins
+            - name: plugin-config
+              mountPath: /config
+          resources:
+            null
+          securityContext:
+            privileged: false
+            runAsGroup: 101
+            runAsNonRoot: true
+            runAsUser: 100
+      volumes:
+        - name: plugins-dir
+          emptyDir: {}
+        - name: plugin-config
+          configMap:
+            name: headlamp-plugin-config

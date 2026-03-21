@@ -35,6 +35,9 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 data:
   plugin.yml: |
+    plugins:
+      - name: plugin-catalog
+        source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp-plugin-catalog
 ---
 # Source: headlamp/templates/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -137,6 +140,8 @@ spec:
           args:
             - "-in-cluster"
             - "-in-cluster-context-name=main"
+            - "-enable-helm"
+            - "-proxy-urls=https://artifacthub.io/*"
             - "-plugins-dir=/headlamp/plugins"
             - "-session-ttl=86400"
             # Check if externalSecret is disabled

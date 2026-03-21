@@ -73,7 +73,8 @@ $ helm install my-headlamp headlamp/headlamp \
 | config.baseURL     | string | `""`                  | Base URL path for Headlamp UI                                             |
 | config.sessionTTL  | int    | `86400`               | The time in seconds for the internal session to remain valid (Default: 86400/24h, Min: 1 , Max: 31536000/1yr) |
 | config.pluginsDir  | string | `"/headlamp/plugins"` | Directory to load Headlamp plugins from                                   |
-| config.enableHelm  | bool   | `false`               | Enable Helm operations like install, upgrade and uninstall of Helm charts |
+| config.enableHelm  | bool   | `true`                | Enable Helm operations like install, upgrade and uninstall of Helm charts |
+| config.proxyURLs   | string | `"https://artifacthub.io/*"` | Comma-separated list of URL patterns to allow proxying to (e.g. "https://artifacthub.io/*,https://example.com/*") |
 | config.extraArgs   | array  | `[]`                  | Additional arguments for Headlamp server                                  |
 | config.tlsCertPath | string | `""`                  | Certificate for serving TLS                                               |
 | config.tlsKeyPath  | string | `""`                  | Key for serving TLS                                                       |
@@ -350,9 +351,9 @@ Ensure your replicaCount and maintenance procedures respect the configured PDB t
 
 | Key           | Type    | Default           | Description                                                                               |
 | ------------- | ------- | ----------------- | ----------------------------------------------------------------------------------------- |
-| enabled       | boolean | `false`           | Enable plugin manager                                                                     |
+| enabled       | boolean | `true`            | Enable plugin manager                                                                     |
 | configFile    | string  | `plugin.yml`      | Plugin configuration file name                                                            |
-| configContent | string  | `""`              | Plugin configuration content in YAML format. This is required if plugins.enabled is true. |
+| configContent | string  | YAML config that installs `plugin-catalog` from ArtifactHub | Plugin configuration content in YAML format. This is required if plugins.enabled is true. |
 | baseImage     | string  | `node:lts-alpine` | Base node image to use                                                                    |
 | version       | string  | `latest`          | Headlamp plugin package version to install                                                |
 | env           | list    | `[]`              | Plugin manager env variable configuration                                                 |

@@ -239,6 +239,9 @@ spec:
             {{- with .Values.config.enableHelm }}
             - "-enable-helm"
             {{- end }}
+            {{- with .Values.config.proxyURLs }}
+            - "-proxy-urls={{ . }}"
+            {{- end }}
             {{- if .Values.config.watchPlugins }}
             - "-watch-plugins-changes"
             {{- end }}

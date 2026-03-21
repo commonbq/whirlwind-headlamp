@@ -110,6 +110,8 @@ config:
   # -- directory to look for plugins
   pluginsDir: "/headlamp/plugins"
   enableHelm: true
+  # -- Comma-separated list of URL patterns to allow proxying to (e.g. "https://artifacthub.io/*,https://example.com/*")
+  proxyURLs: "https://artifacthub.io/*"
   watchPlugins: false
   # tlsCertPath: "/headlamp-cert/headlamp-ca.crt"
   # tlsKeyPath: "/headlamp-cert/headlamp-tls.key"
@@ -329,11 +331,14 @@ priorityClassName: ""
 # Plugin Manager Sidecar Container Configuration
 pluginsManager:
   # -- Enable plugin manager
-  enabled: false
+  enabled: true
   # -- Plugin configuration file name
   configFile: "plugin.yml"
   # -- Plugin configuration content in YAML format. This is required if plugins.enabled is true.
-  configContent: ""
+  configContent: |
+    plugins:
+      - name: plugin-catalog
+        source: https://artifacthub.io/packages/headlamp/headlamp-plugins/headlamp-plugin-catalog
   # -- Base node image to use
   baseImage: node:lts-alpine
   # -- Headlamp plugin package version to install
