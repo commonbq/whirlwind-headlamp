@@ -75,6 +75,8 @@ export interface ProjectsState {
   detailsTabs: Record<string, ProjectDetailsTab>;
   projectDeleteButton?: ProjectDeleteButton;
   headerActions: Record<string, ProjectHeaderAction>;
+  /** The ID of the currently selected project, or null if none selected */
+  selectedProjectId: string | null;
 }
 
 const initialState: ProjectsState = {
@@ -82,6 +84,7 @@ const initialState: ProjectsState = {
   detailsTabs: {},
   overviewSections: {},
   headerActions: {},
+  selectedProjectId: null,
 };
 
 const projectsSlice = createSlice({
@@ -112,6 +115,11 @@ const projectsSlice = createSlice({
     addHeaderAction(state, action: PayloadAction<ProjectHeaderAction>) {
       state.headerActions[action.payload.id] = action.payload;
     },
+
+    /** Set the currently selected project by ID (null to deselect) */
+    setSelectedProject(state, action: PayloadAction<string | null>) {
+      state.selectedProjectId = action.payload;
+    },
   },
 });
 
@@ -121,6 +129,7 @@ export const {
   addOverviewSection,
   setProjectDeleteButton,
   addHeaderAction,
+  setSelectedProject,
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;
