@@ -115,6 +115,7 @@ import ValidatingWebhookConfigurationDetails from '../../components/webhookconfi
 import ValidatingWebhookConfigurationList from '../../components/webhookconfiguration/ValidatingWebhookConfigList';
 import WorkloadDetails from '../../components/workload/Details';
 import WorkloadOverview from '../../components/workload/Overview';
+import CloudConsole from '../../components/cloudconsole/CloudConsole';
 import { isElectron } from '../../helpers/isElectron';
 import LocaleSelect from '../../i18n/LocaleSelect/LocaleSelect';
 import { useCluster } from '..//k8s';
@@ -184,6 +185,18 @@ const defaultRoutes: { [routeName: string]: Route } = {
     useClusterURL: false,
     noAuthRequired: true,
     component: () => <Home />,
+  },
+  cloudConsole: {
+    path: '/cloud',
+    exact: true,
+    name: 'Cloud Console',
+    sidebar: {
+      item: 'cloudConsole',
+      sidebar: DefaultSidebars.HOME,
+    },
+    useClusterURL: false,
+    noAuthRequired: true,
+    component: () => <CloudConsole />,
   },
   advancedSearch: {
     path: '/advanced-search',

@@ -46,15 +46,15 @@ import (
 	"github.com/gorilla/mux"
 	auth "github.com/kubernetes-sigs/headlamp/backend/pkg/auth"
 	"github.com/kubernetes-sigs/headlamp/backend/pkg/cache"
+	"github.com/kubernetes-sigs/headlamp/backend/pkg/cloudservices"
 	cfg "github.com/kubernetes-sigs/headlamp/backend/pkg/config"
-	"github.com/kubernetes-sigs/headlamp/backend/pkg/serviceproxy"
-
 	headlampcfg "github.com/kubernetes-sigs/headlamp/backend/pkg/headlampconfig"
 	"github.com/kubernetes-sigs/headlamp/backend/pkg/helm"
 	"github.com/kubernetes-sigs/headlamp/backend/pkg/kubeconfig"
 	"github.com/kubernetes-sigs/headlamp/backend/pkg/logger"
 	"github.com/kubernetes-sigs/headlamp/backend/pkg/plugins"
 	"github.com/kubernetes-sigs/headlamp/backend/pkg/portforward"
+	"github.com/kubernetes-sigs/headlamp/backend/pkg/serviceproxy"
 	"github.com/kubernetes-sigs/headlamp/backend/pkg/spa"
 	"github.com/kubernetes-sigs/headlamp/backend/pkg/telemetry"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -649,6 +649,9 @@ func createHeadlampHandler(config *HeadlampConfig) http.Handler {
 
 	// Configuration
 	r.HandleFunc("/config", config.getConfig).Methods("GET")
+
+	// Cloud services catalogue
+	r.HandleFunc("/cloudservices", cloudservices.Handler()).Methods("GET")
 
 	// Auth token management
 	r.HandleFunc("/auth/set-token", config.handleSetToken).Methods("POST")

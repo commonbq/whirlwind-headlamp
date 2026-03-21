@@ -148,6 +148,12 @@ export const useSidebarItems = (sidebarName: string = DefaultSidebars.IN_CLUSTER
         divider: !shouldShowHomeItem,
       },
       {
+        name: 'cloudConsole',
+        icon: 'mdi:cloud',
+        label: t('translation|Cloud Console'),
+        url: '/cloud',
+      },
+      {
         name: 'notifications',
         icon: 'mdi:bell',
         label: t('translation|Notifications'),
