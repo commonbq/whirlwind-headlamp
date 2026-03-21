@@ -15,9 +15,15 @@
  */
 
 import { Icon } from '@iconify/react';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonBase from '@mui/material/ButtonBase';
+import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
 import InputAdornment from '@mui/material/InputAdornment';
 import List from '@mui/material/List';
@@ -32,12 +38,16 @@ import { groupBy, uniq } from 'lodash';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { useClustersConf } from '../../lib/k8s';
+import { apply } from '../../lib/k8s/api/v1/apply';
+import { ApiError } from '../../lib/k8s/api/v2/ApiError';
+import { KubeObjectInterface } from '../../lib/k8s/KubeObject';
 import Namespace from '../../lib/k8s/namespace';
+import { createRouteURL } from '../../lib/router/createRouteURL';
 import { useTypedSelector } from '../../redux/hooks';
 import { ProjectDefinition, setSelectedProject } from '../../redux/projectsSlice';
-import { NewProjectPopup } from './NewProjectPopup';
-import { PROJECT_ID_LABEL } from './projectUtils';
+import { PROJECT_ID_LABEL, toKubernetesName } from './projectUtils';
 
 /**
  * Fetches and returns all available projects.
@@ -68,9 +78,105 @@ function useProjects(): ProjectDefinition[] {
 }
 
 /**
+ * Simple dialog for creating a new project by name only.
+ * Creates a namespace tagged with the project ID label in all available clusters.
+ */
+function CreateProjectDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useTranslation();
+  const history = useHistory();
+  const clusterConf = useClustersConf();
+  const clusters = Object.values(clusterConf ?? {});
+
+  const [projectName, setProjectName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<ApiError | null>(null);
+
+  const handleClose = () => {
+    setProjectName('');
+    setError(null);
+    onClose();
+  };
+
+  const namespaceName = toKubernetesName(projectName);
+  const isValid = namespaceName.length > 0;
+
+  const handleCreate = async () => {
+    if (!isValid || isCreating || clusters.length === 0) return;
+    setIsCreating(true);
+    setError(null);
+    try {
+      for (const cluster of clusters) {
+        const ns: KubeObjectInterface = {
+          kind: 'Namespace',
+          apiVersion: 'v1',
+          metadata: {
+            name: namespaceName,
+            labels: { [PROJECT_ID_LABEL]: projectName },
+          } as any,
+        };
+        await apply(ns, cluster.name);
+      }
+      handleClose();
+      history.push(createRouteURL('projectDetails', { name: projectName }));
+    } catch (e: any) {
+      setError(e);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Icon icon="mdi:folder-add" />
+        {t('Create New Project')}
+      </DialogTitle>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+        <TextField
+          label={t('Project Name')}
+          value={projectName}
+          onChange={e => {
+            setProjectName(e.target.value.toLowerCase());
+            setError(null);
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && isValid && !isCreating) {
+              handleCreate();
+            }
+          }}
+          helperText={
+            projectName && !isValid
+              ? t('Enter a valid project name (lowercase letters, numbers, and hyphens)')
+              : t('Enter a name for your new project')
+          }
+          error={projectName.length > 0 && !isValid}
+          fullWidth
+          size="small"
+          autoComplete="off"
+        />
+        {error && <Alert severity="error">{error.message}</Alert>}
+      </DialogContent>
+      <DialogActions>
+        <Button variant="contained" color="secondary" onClick={handleClose} disabled={isCreating}>
+          {t('Cancel')}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleCreate}
+          disabled={!isValid || isCreating || clusters.length === 0}
+          startIcon={isCreating ? <CircularProgress size={14} color="inherit" /> : undefined}
+        >
+          {isCreating ? t('Creating…') : t('Create')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/**
  * GCP-style project selector button for the navigation bar.
  * Shows the current project name (or a placeholder) and opens a popover
- * listing all projects plus a "New Project" option.
+ * listing all projects. The last item in the list is "+ Create New Project".
  */
 export function ProjectSelector() {
   const { t } = useTranslation();
@@ -129,7 +235,11 @@ export function ProjectSelector() {
           borderRadius: 1,
           border: '1px solid',
           borderColor: 'divider',
-          color: theme.palette.navbar.color ?? theme.palette.getContrastText(theme.palette.navbar.background ?? theme.palette.primary.main),
+          color:
+            theme.palette.navbar.color ??
+            theme.palette.getContrastText(
+              theme.palette.navbar.background ?? theme.palette.primary.main
+            ),
           '&:hover': {
             backgroundColor: 'action.hover',
           },
@@ -187,61 +297,55 @@ export function ProjectSelector() {
 
         <Divider />
 
-        {/* Project list */}
+        {/* Project list — "+ Create New Project" is always the last item */}
         <List dense disablePadding sx={{ maxHeight: 240, overflowY: 'auto' }}>
-          {filteredProjects.length === 0 ? (
+          {filteredProjects.length === 0 && (
             <ListItem>
               <ListItemText
                 primary={
                   <Typography variant="body2" color="text.secondary" align="center">
-                    {searchText ? t('No matching projects') : t('No projects found')}
+                    {searchText ? t('No matching projects') : t('No projects yet')}
                   </Typography>
                 }
               />
             </ListItem>
-          ) : (
-            filteredProjects.map(project => (
-              <ListItemButton
-                key={project.id}
-                selected={project.id === selectedProjectId}
-                onClick={() => handleSelectProject(project.id)}
-              >
-                <ListItemIcon sx={{ minWidth: 32 }}>
-                  <Icon icon="mdi:folder" style={{ fontSize: 18 }} />
-                </ListItemIcon>
-                <ListItemText
-                  primary={project.id}
-                  secondary={project.clusters.join(', ')}
-                  primaryTypographyProps={{ noWrap: true }}
-                  secondaryTypographyProps={{ noWrap: true, fontSize: '0.7rem' }}
-                />
-                {project.id === selectedProjectId && (
-                  <Icon icon="mdi:check" style={{ fontSize: 18, flexShrink: 0 }} />
-                )}
-              </ListItemButton>
-            ))
           )}
+          {filteredProjects.map(project => (
+            <ListItemButton
+              key={project.id}
+              selected={project.id === selectedProjectId}
+              onClick={() => handleSelectProject(project.id)}
+            >
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                <Icon icon="mdi:folder" style={{ fontSize: 18 }} />
+              </ListItemIcon>
+              <ListItemText
+                primary={project.id}
+                secondary={project.clusters.join(', ')}
+                primaryTypographyProps={{ noWrap: true }}
+                secondaryTypographyProps={{ noWrap: true, fontSize: '0.7rem' }}
+              />
+              {project.id === selectedProjectId && (
+                <Icon icon="mdi:check" style={{ fontSize: 18, flexShrink: 0 }} />
+              )}
+            </ListItemButton>
+          ))}
+
+          {/* Always last in the list */}
+          <Divider />
+          <ListItemButton onClick={handleCreateNew} sx={{ color: 'primary.main' }}>
+            <ListItemIcon sx={{ minWidth: 32, color: 'primary.main' }}>
+              <Icon icon="mdi:plus-circle-outline" style={{ fontSize: 18 }} />
+            </ListItemIcon>
+            <ListItemText
+              primary={t('+ Create New Project')}
+              primaryTypographyProps={{ fontWeight: 500 }}
+            />
+          </ListItemButton>
         </List>
-
-        <Divider />
-
-        {/* New Project button */}
-        <Box sx={{ p: 1 }}>
-          <Button
-            fullWidth
-            variant="text"
-            startIcon={<Icon icon="mdi:plus" />}
-            onClick={handleCreateNew}
-            sx={{ justifyContent: 'flex-start' }}
-          >
-            {t('New Project')}
-          </Button>
-        </Box>
       </Popover>
 
-      {showCreate && (
-        <NewProjectPopup open={showCreate} onClose={() => setShowCreate(false)} />
-      )}
+      <CreateProjectDialog open={showCreate} onClose={() => setShowCreate(false)} />
     </>
   );
 }
