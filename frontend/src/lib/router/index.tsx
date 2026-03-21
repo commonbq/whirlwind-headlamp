@@ -72,6 +72,7 @@ import { LimitRangeDetails } from '../../components/limitRange/Details';
 import { LimitRangeList } from '../../components/limitRange/List';
 import NamespaceDetails from '../../components/namespace/Details';
 import NamespacesList from '../../components/namespace/List';
+import NativePlugins from '../../components/NativePlugins';
 import { NetworkPolicyDetails } from '../../components/networkpolicy/Details';
 import { NetworkPolicyList } from '../../components/networkpolicy/List';
 import NodeDetails from '../../components/node/Details';
@@ -933,6 +934,18 @@ const defaultRoutes: { [routeName: string]: Route } = {
     useClusterURL: false,
     noAuthRequired: true,
     component: () => <PluginSettingsDetails />,
+  },
+  nativePlugins: {
+    path: '/plugins/native',
+    exact: true,
+    name: 'Native Plugins',
+    sidebar: {
+      item: 'nativePlugins',
+      sidebar: DefaultSidebars.HOME,
+    },
+    useClusterURL: false,
+    noAuthRequired: true,
+    component: () => <NativePlugins />,
   },
   portforwards: {
     path: '/portforwards',

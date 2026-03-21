@@ -170,6 +170,11 @@ export const useSidebarItems = (sidebarName: string = DefaultSidebars.IN_CLUSTER
             url: '/settings/plugins',
           },
           {
+            name: 'nativePlugins',
+            label: t('translation|Native Plugins'),
+            url: '/plugins/native',
+          },
+          {
             name: 'settingsCluster',
             label: t('glossary|Cluster'),
             url: '/settings/cluster',
