@@ -80,6 +80,23 @@
                 </div>
               </div>
             </div>
+            <button
+              aria-expanded="false"
+              aria-haspopup="true"
+              aria-label="Select project"
+              class="MuiButtonBase-root css-1hid75f-MuiButtonBase-root"
+              tabindex="0"
+              type="button"
+            >
+              <p
+                class="MuiTypography-root MuiTypography-body2 MuiTypography-noWrap css-gh7hib-MuiTypography-root"
+              >
+                Select Project
+              </p>
+              <span
+                class="MuiTouchRipple-root css-8je8zh-MuiTouchRipple-root"
+              />
+            </button>
             <div
               class="MuiBox-root css-0"
             />

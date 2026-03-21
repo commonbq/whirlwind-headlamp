@@ -648,6 +648,86 @@
           </div>
         </div>
       </div>
+      <div
+        class="MuiBox-root css-j1fy4m"
+      >
+        <div
+          class="MuiGrid-root MuiGrid-container MuiGrid-spacing-xs-2 css-1ts0dnm-MuiGrid-root"
+        >
+          <div
+            class="MuiGrid-root MuiGrid-item css-13i4rnv-MuiGrid-root"
+          >
+            <div
+              class="MuiBox-root css-70qvj9"
+            >
+              <h2
+                class="MuiTypography-root MuiTypography-h2 MuiTypography-noWrap css-m5vcfd-MuiTypography-root"
+              >
+                Available Example Plugins
+              </h2>
+              <div
+                class="MuiBox-root css-ldp2l3"
+              />
+            </div>
+          </div>
+        </div>
+        <div
+          class="MuiBox-root css-1txv3mw"
+        >
+          <div
+            class="MuiGrid-root MuiGrid-container MuiGrid-spacing-xs-2 css-mhc70k-MuiGrid-root"
+          >
+            <div
+              class="MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-sm-6 MuiGrid-grid-md-4 css-vhyfqm-MuiGrid-root"
+            >
+              <div
+                class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root css-1xvza2b-MuiPaper-root-MuiCard-root"
+              >
+                <div
+                  class="MuiCardContent-root css-2r3irp-MuiCardContent-root"
+                >
+                  <div
+                    class="MuiBox-root css-1gh5laf"
+                  >
+                    <div
+                      class="MuiTypography-root MuiTypography-subtitle1 css-1p3zzy4-MuiTypography-root"
+                    >
+                      KNative
+                    </div>
+                  </div>
+                  <span
+                    class="MuiTypography-root MuiTypography-caption css-oafi7l-MuiTypography-root"
+                  >
+                    v
+                    0.1.0
+                  </span>
+                  <p
+                    class="MuiTypography-root MuiTypography-body2 css-11zj6ou-MuiTypography-root"
+                  >
+                    KNative plugin for Headlamp. Provides a UI for managing KNative Serving and Eventing resources, inspired by GCP Cloud Run.
+                  </p>
+                </div>
+                <div
+                  class="MuiCardActions-root MuiCardActions-spacing css-dnrpxu-MuiCardActions-root"
+                >
+                  <a
+                    class="MuiTypography-root MuiTypography-inherit MuiLink-root MuiLink-underlineHover MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary MuiButton-disableElevation MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary MuiButton-disableElevation css-35ublb-MuiTypography-root-MuiLink-root-MuiButtonBase-root-MuiButton-root"
+                    href="https://github.com/commonbq/whirlwind-headlamp/tree/main/plugins/examples/knative"
+                    rel="noopener noreferrer"
+                    tabindex="0"
+                    target="_blank"
+                  >
+                    Learn More
+                    <span
+                      class="MuiTouchRipple-root css-8je8zh-MuiTouchRipple-root"
+                    />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </body>

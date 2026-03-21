@@ -234,6 +234,7 @@
     "CLUSTER": "CLUSTER",
     "GLOBAL_SEARCH": "GLOBAL_SEARCH",
     "NOTIFICATION": "NOTIFICATION",
+    "PROJECT": "PROJECT",
     "SETTINGS": "SETTINGS",
     "USER": "USER",
   },
@@ -416,6 +417,7 @@
   },
   "Lodash": Function {
     "default": [Function],
+    "module.exports": [Function],
   },
   "MonacoEditor": "Present",
   "MuiCore": "Present",

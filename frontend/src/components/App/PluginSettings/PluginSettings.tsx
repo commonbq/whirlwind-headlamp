@@ -16,7 +16,11 @@
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
+import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import { useTheme } from '@mui/material/styles';
 import { SwitchProps } from '@mui/material/Switch';
@@ -35,6 +39,28 @@ import { Link as HeadlampLink } from '../../common/';
 import SectionBox from '../../common/SectionBox';
 import SectionFilterHeader from '../../common/SectionFilterHeader';
 import Table from '../../common/Table';
+
+/** Catalog entry for an example plugin that is always available to install. */
+interface ExamplePlugin {
+  name: string;
+  displayName: string;
+  description: string;
+  homepage: string;
+  version: string;
+}
+
+/** Example plugins that are always shown as available to install. */
+const EXAMPLE_PLUGINS: ExamplePlugin[] = [
+  {
+    name: '@headlamp-k8s/knative',
+    displayName: 'KNative',
+    description:
+      'KNative plugin for Headlamp. Provides a UI for managing KNative Serving and Eventing resources, inspired by GCP Cloud Run.',
+    homepage:
+      'https://github.com/commonbq/whirlwind-headlamp/tree/main/plugins/examples/knative',
+    version: '0.1.0',
+  },
+];
 
 /**
  * Interface of the component's props structure.
@@ -112,6 +138,54 @@ const EnableSwitch = (props: SwitchProps) => {
     />
   );
 };
+
+/** Displays example plugins that are always available to install. */
+function AvailablePluginsSection({ installedPlugins }: { installedPlugins: PluginInfo[] }) {
+  const { t } = useTranslation(['translation']);
+
+  return (
+    <SectionBox title={t('translation|Available Example Plugins')} py={2}>
+      <Grid container spacing={2}>
+        {EXAMPLE_PLUGINS.map(plugin => {
+          const isInstalled = installedPlugins.some(p => p.name === plugin.name);
+          return (
+            <Grid item xs={12} sm={6} md={4} key={plugin.name}>
+              <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <Typography variant="subtitle1" component="div" fontWeight="bold">
+                      {plugin.displayName}
+                    </Typography>
+                    {isInstalled && (
+                      <Chip label={t('translation|Installed')} size="small" color="success" />
+                    )}
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+                    v{plugin.version}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {plugin.description}
+                  </Typography>
+                </CardContent>
+                <CardActions>
+                  <Button
+                    size="small"
+                    component={Link}
+                    href={plugin.homepage}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t('translation|Learn More')}
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </SectionBox>
+  );
+}
 
 /** PluginSettingsPure is the main component to where we render the plugin data. */
 export function PluginSettingsPure(props: PluginSettingsPureProps) {
@@ -420,6 +494,7 @@ export function PluginSettingsPure(props: PluginSettingsPureProps) {
           }}
         />
       </SectionBox>
+      <AvailablePluginsSection installedPlugins={pluginChanges} />
       {enableSave && isElectron() && (
         <Box
           sx={{
