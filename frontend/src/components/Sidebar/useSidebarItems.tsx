@@ -148,6 +148,12 @@ export const useSidebarItems = (sidebarName: string = DefaultSidebars.IN_CLUSTER
         divider: !shouldShowHomeItem,
       },
       {
+        name: 'projects',
+        icon: 'mdi:folder-multiple',
+        label: t('translation|Projects'),
+        url: '/projects',
+      },
+      {
         name: 'notifications',
         icon: 'mdi:bell',
         label: t('translation|Notifications'),
