@@ -179,10 +179,15 @@ export function filterSources(
   });
 
   const compatible = enabledSourcesAndPackageInfos.filter(({ packageInfo }) => {
-    const isCompatible = semver.satisfies(
-      semver.coerce(packageInfo.devDependencies?.['@kinvolk/headlamp-plugin']) || '',
-      compatibleVersion
-    );
+    const hlpVersion = packageInfo.devDependencies?.['@kinvolk/headlamp-plugin'];
+    const coercedVersion = hlpVersion ? semver.coerce(hlpVersion) : null;
+    // Compatible if: no compatible version range specified, OR no headlamp-plugin dep specified,
+    // OR the dep version can't be parsed as semver, OR the parsed version satisfies the range.
+    const isCompatible =
+      !compatibleVersion ||
+      !hlpVersion ||
+      coercedVersion === null ||
+      semver.satisfies(coercedVersion, compatibleVersion);
     if (!isCompatible) {
       incompatiblePlugins[packageInfo.name] = packageInfo;
       return false;
@@ -513,10 +518,14 @@ export async function fetchAndExecutePlugins(
   // Mark incompatible plugins
   const incompatiblePlugins: Record<string, PluginInfo> = {};
   updatedSettingsPackages = updatedSettingsPackages.map(plugin => {
-    const isCompatible = semver.satisfies(
-      semver.coerce(plugin.devDependencies?.['@kinvolk/headlamp-plugin']) || '',
-      compatibleHeadlampPluginVersion
-    );
+    const hlpVersion = plugin.devDependencies?.['@kinvolk/headlamp-plugin'];
+    const coercedVersion = hlpVersion ? semver.coerce(hlpVersion) : null;
+    // Compatible if: no headlamp-plugin dep specified, OR the dep version can't be parsed,
+    // OR the parsed version satisfies the required range.
+    const isCompatible =
+      !hlpVersion ||
+      coercedVersion === null ||
+      semver.satisfies(coercedVersion, compatibleHeadlampPluginVersion);
 
     if (!isCompatible) {
       incompatiblePlugins[`${plugin.name}@${plugin.type}`] = plugin;

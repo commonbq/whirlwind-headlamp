@@ -219,4 +219,58 @@ describe('filterSources', () => {
     expect(disabledCompatCheck.sourcesToExecute[1]).toBe('source2');
     expect(disabledCompatCheck.incompatiblePlugins['ourplugin1']).not.toBeDefined();
   });
+
+  test('plugins without @kinvolk/headlamp-plugin in devDependencies are treated as compatible', () => {
+    const sources = ['source1', 'source2'];
+    const packageInfos = [
+      {
+        name: 'ourplugin1',
+        description: 'plugin without devDependencies',
+        homepage: 'https://example.com/1',
+        version: '1.0.0',
+        author: 'author1',
+        // No devDependencies at all
+      },
+      {
+        name: 'ourplugin2',
+        description: 'plugin with devDependencies but no headlamp-plugin',
+        homepage: 'https://example.com/2',
+        version: '1.0.0',
+        author: 'author2',
+        devDependencies: {
+          'some-other-dep': '^1.0.0',
+        },
+      },
+    ];
+    const settingsPackages = [
+      {
+        name: 'ourplugin1',
+        description: 'plugin without devDependencies',
+        homepage: 'https://example.com/1',
+        version: '1.0.0',
+        author: 'author1',
+        isEnabled: true,
+      },
+      {
+        name: 'ourplugin2',
+        description: 'plugin with devDependencies but no headlamp-plugin',
+        homepage: 'https://example.com/2',
+        version: '1.0.0',
+        author: 'author2',
+        isEnabled: true,
+      },
+    ];
+    const appMode = true;
+    const { sourcesToExecute, incompatiblePlugins } = filterSources(
+      sources,
+      packageInfos,
+      appMode,
+      '>=0.8.0-alpha.3',
+      settingsPackages
+    );
+
+    // Both plugins should be loaded even without the headlamp-plugin dep
+    expect(sourcesToExecute.length).toBe(2);
+    expect(Object.keys(incompatiblePlugins).length).toBe(0);
+  });
 });
