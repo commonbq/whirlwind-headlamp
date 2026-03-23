@@ -989,6 +989,19 @@ const defaultRoutes: { [routeName: string]: Route } = {
     isFullWidth: true,
     component: () => <LazyGraphView height="100%" />,
   },
+  knative: {
+    path: '/knative',
+    exact: true,
+    name: 'Knative',
+    sidebar: 'kservices',
+    component: () => {
+      const history = useHistory();
+      React.useEffect(() => {
+        history.replace('/knative/services');
+      }, []);
+      return <></>;
+    },
+  },
   kservices: {
     path: '/knative/services',
     exact: true,
