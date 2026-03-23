@@ -1,22 +1,17 @@
 {
   "name": "@headlamp-k8s/knative",
-  "author": "Headlamp Contributors",
-  "license": "Apache-2.0",
   "version": "0.1.0",
-  "description": "KNative plugin for Headlamp. Provides a UI for managing KNative Serving and Eventing resources, inspired by GCP Cloud Run.",
-  "homepage": "https://github.com/commonbq/whirlwind-headlamp/tree/main/plugins/native/knative",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/commonbq/whirlwind-headlamp.git",
-    "directory": "plugins/native/knative"
-  },
+  "description": "A Headlamp plugin for visualizing and managing Knative Services. Provides GUI functionality to list and view service details, edit traffic splitting, update concurrency settings, perform redeploy/restart operations, and reference external/internal HTTPRoutes.",
   "scripts": {
     "start": "headlamp-plugin start",
     "build": "headlamp-plugin build",
     "format": "headlamp-plugin format",
     "lint": "headlamp-plugin lint",
     "lint-fix": "headlamp-plugin lint --fix",
+    "package": "headlamp-plugin package",
     "tsc": "headlamp-plugin tsc",
+    "storybook": "headlamp-plugin storybook",
+    "storybook-build": "headlamp-plugin storybook-build",
     "test": "headlamp-plugin test",
     "i18n": "headlamp-plugin i18n"
   },
@@ -24,9 +19,10 @@
     "headlamp",
     "headlamp-plugin",
     "kubernetes",
-    "knative",
+    "kubernetes-ui",
+    "kubernetes-debugging",
     "plugins",
-    "serverless"
+    "knative"
   ],
   "prettier": "@headlamp-k8s/eslint-config/prettier-config",
   "eslintConfig": {
@@ -36,10 +32,17 @@
       "plugin:jsx-a11y/recommended"
     ]
   },
-  "devDependencies": {
-    "@kinvolk/headlamp-plugin": "^0.13.0"
-  },
   "overrides": {
     "typescript": "5.6.2"
+  },
+  "devDependencies": {
+    "@kinvolk/headlamp-plugin": "^0.13.0",
+    "knip": "^5.68.0"
+  },
+  "dependencies": {},
+  "headlamp": {
+    "i18n": [
+      "en"
+    ]
   }
 }

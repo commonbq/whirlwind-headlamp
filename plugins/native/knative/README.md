@@ -1,51 +1,21 @@
-# KNative Plugin for Headlamp
+# Knative
 
-A Headlamp plugin that provides a UI for managing [KNative](https://knative.dev/) Serving and Eventing resources, inspired by GCP Cloud Run.
+A Headlamp plugin for visualizing and managing Knative Services. Knative is a Kubernetes-based platform for deploying and managing serverless workloads. It provides automatic scaling, traffic management, and simplified deployment workflows for containerized applications.
 
-## Features
+This plugin adds a new item (Knative) to the sidebar and provides GUI functionality to list and view service details, edit traffic splitting, update concurrency settings, perform redeploy/restart operations.
 
-### Serving
-- **Services List**: View all KNative services across namespaces with status indicators (Ready/Not Ready), service URLs, and latest revision info.
-- **Service Detail**: Detailed view of a KNative service including:
-  - Service URL (clickable)
-  - Container configuration (image, resources, environment variables, concurrency, timeout)
-  - Traffic splits with visual progress bars
-  - Condition status table
-  - Revision history with latest revision highlighted
-- **Revisions List**: Browse all revisions across namespaces with status, image, and concurrency info.
+## Knative Installation
 
-### Eventing
-- **Brokers**: View KNative Eventing brokers with status and address URL.
-- **Triggers**: View triggers with broker association, subscriber, and event filters.
+Please refer to the [official installation guide](https://knative.dev/docs/install/) for Knative to learn to install it.
 
-## Usage
+## Plugin Installation in Headlamp for Desktop
 
-The plugin adds a **KNative** top-level sidebar entry with sub-menus for Serving and Eventing.
+Go to the Plugin Catalog, search for the Knative plugin, and click the Install button. Reload the UI (Navigation menu > Reload, or use the notification after installing the plugin) to see the new Knative item in the sidebar.
 
-> **Note**: KNative must be installed in your cluster for this plugin to show data. If KNative CRDs are not present, the plugin will display a helpful error message.
+## Demo
 
-## Running the Plugin
+<video src="https://github.com/user-attachments/assets/a5c9cac3-f711-4306-84cd-83178fc876e0" controls width="800">
+  Your browser does not support the video tag.
+</video>
 
-```bash
-cd plugins/native/knative
-npm install
-npm start
-# Open Headlamp and look for "KNative" in the sidebar.
-```
-
-## Building
-
-```bash
-npm run build
-```
-
-## Requirements
-
-- [KNative Serving](https://knative.dev/docs/install/) installed in your cluster for Serving features.
-- [KNative Eventing](https://knative.dev/docs/eventing/) installed in your cluster for Eventing features.
-
-## API References
-
-- [registerSidebarEntry](https://headlamp.dev/docs/latest/development/api/modules/plugin_registry/#registersidebarentry)
-- [registerRoute](https://headlamp.dev/docs/latest/development/api/modules/plugin_registry/#registerroute)
-- [ApiProxy](https://headlamp.dev/docs/latest/development/api/modules/lib_k8s_apiProxy/)
+Watch: https://github.com/user-attachments/assets/a5c9cac3-f711-4306-84cd-83178fc876e0
