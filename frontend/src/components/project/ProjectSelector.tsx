@@ -248,11 +248,7 @@ export function ProjectSelector() {
         })}
       >
         <Icon icon="mdi:folder-open-outline" style={{ fontSize: 18, flexShrink: 0 }} />
-        <Typography
-          variant="body2"
-          noWrap
-          sx={{ flexGrow: 1, textAlign: 'left', fontWeight: 500 }}
-        >
+        <Typography variant="body2" noWrap sx={{ flexGrow: 1, textAlign: 'left', fontWeight: 500 }}>
           {selectedProject ? selectedProject.id : t('Select Project')}
         </Typography>
         <Icon
