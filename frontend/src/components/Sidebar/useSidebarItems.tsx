@@ -448,22 +448,22 @@ export const useSidebarItems = (sidebarName: string = DefaultSidebars.IN_CLUSTER
       name: 'knative',
       label: 'Knative',
       icon: 'custom:knative',
-      url: '/knative/services',
+      url: createRouteURL('kservices'),
       subList: [
         {
           name: 'kservices',
           label: 'KServices',
-          url: '/knative/services',
+          url: createRouteURL('kservices'),
         },
         {
           name: 'revisions',
           label: 'Revisions',
-          url: '/knative/revisions',
+          url: createRouteURL('revisions'),
         },
         {
           name: 'knetworking',
           label: 'Networking',
-          url: '/knative/networking',
+          url: createRouteURL('knetworking'),
         },
       ],
     });

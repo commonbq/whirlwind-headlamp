@@ -997,7 +997,7 @@ const defaultRoutes: { [routeName: string]: Route } = {
     component: () => {
       const history = useHistory();
       React.useEffect(() => {
-        history.replace('/knative/services');
+        history.replace(createRouteURL('kservices'));
       }, []);
       return <></>;
     },
