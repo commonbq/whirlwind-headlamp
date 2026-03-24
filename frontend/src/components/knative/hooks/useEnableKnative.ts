@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { apply } from '../../../lib/k8s/api/v1/apply';
+import { apiFactoryWithNamespace } from '../../../lib/k8s/apiProxy';
 import ClusterRoleBinding from '../../../lib/k8s/clusterRoleBinding';
-import type { KubeObjectInterfaceCreate } from '../../../lib/k8s/KubeObject';
+import CRD from '../../../lib/k8s/crd';
 import { useAuthorization } from './useAuthorization';
 
 const KNATIVE_HELM_NAMESPACE = 'flux-system';
@@ -25,79 +25,125 @@ const KNATIVE_HELM_RELEASE_NAME = 'knative-serving';
 const KNATIVE_HELM_CHART = 'knative-serving';
 const KNATIVE_HELM_REPO_URL = 'https://charts.knative.dev';
 
-interface FluxHelmRepository extends KubeObjectInterfaceCreate {
-  apiVersion: 'source.toolkit.fluxcd.io/v1beta2';
-  kind: 'HelmRepository';
-  spec: {
-    interval: string;
-    url: string;
-  };
-}
+/** CRD name that indicates the Flux Helm Controller is installed. */
+const FLUX_HELM_RELEASE_CRD_NAME = 'helmreleases.helm.toolkit.fluxcd.io';
 
-interface FluxHelmRelease extends KubeObjectInterfaceCreate {
-  apiVersion: 'helm.toolkit.fluxcd.io/v2beta2';
-  kind: 'HelmRelease';
-  spec: {
-    interval: string;
-    chart: {
-      spec: {
-        chart: string;
-        version: string;
-        sourceRef: {
-          kind: 'HelmRepository';
-          name: string;
-          namespace: string;
-        };
-      };
-    };
-  };
+/**
+ * Checks whether the Flux Helm Controller is installed on the cluster by
+ * looking for its HelmRelease CRD.
+ */
+function checkFluxInstalled(cluster: string): Promise<boolean> {
+  return new Promise(resolve => {
+    let cancelFn: (() => void) | null = null;
+    let settled = false;
+
+    function settle(result: boolean) {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+      if (cancelFn) cancelFn();
+    }
+
+    const request = CRD.apiGet(
+      () => settle(true),
+      FLUX_HELM_RELEASE_CRD_NAME,
+      undefined,
+      () => settle(false),
+      { cluster }
+    );
+
+    request()
+      .then(cancel => {
+        cancelFn = cancel;
+      })
+      .catch(() => settle(false));
+  });
 }
 
 /**
  * Applies the Flux HelmRepository and HelmRelease resources needed to install
  * Knative Serving via the Flux Helm Controller.
  *
+ * Uses apiFactoryWithNamespace directly (bypassing resourceDefToApiFactory's
+ * API-discovery request) so that no 404 is triggered against the Flux API
+ * group discovery endpoint. Tries the stable v1/v2 APIs first (Flux ≥ 2.3),
+ * and automatically falls back to v1beta2/v2beta2 for older Flux installations.
+ *
  * @param cluster - The cluster to install Knative on.
  */
 async function enableKnativeViaHelmController(cluster?: string): Promise<void> {
-  const helmRepo: FluxHelmRepository = {
-    apiVersion: 'source.toolkit.fluxcd.io/v1beta2',
-    kind: 'HelmRepository',
-    metadata: {
-      name: KNATIVE_HELM_REPO_NAME,
-      namespace: KNATIVE_HELM_NAMESPACE,
-    },
-    spec: {
-      interval: '10m',
-      url: KNATIVE_HELM_REPO_URL,
-    },
-  };
+  if (!cluster) {
+    throw new Error('No cluster selected.');
+  }
 
-  const helmRelease: FluxHelmRelease = {
-    apiVersion: 'helm.toolkit.fluxcd.io/v2beta2',
-    kind: 'HelmRelease',
-    metadata: {
-      name: KNATIVE_HELM_RELEASE_NAME,
-      namespace: KNATIVE_HELM_NAMESPACE,
+  const fluxAvailable = await checkFluxInstalled(cluster);
+  if (!fluxAvailable) {
+    throw new Error(
+      'Flux Helm Controller is not installed on this cluster. ' +
+        'Please install Flux first (https://fluxcd.io/flux/installation/), ' +
+        'then click "Enable Service" again.'
+    );
+  }
+
+  // Build API clients that try the stable API (Flux ≥ 2.3) first, then fall
+  // back to the beta APIs automatically on 404.
+  // The as any cast mirrors the same pattern used in KubeObject.apiEndpoint for
+  // classes with multiple apiVersion values (e.g. CRD, GatewayClass).
+  const helmRepoVersionArgs = [
+    ['source.toolkit.fluxcd.io', 'v1', 'helmrepositories'],
+    ['source.toolkit.fluxcd.io', 'v1beta2', 'helmrepositories'],
+  ];
+  const helmReleaseVersionArgs = [
+    ['helm.toolkit.fluxcd.io', 'v2', 'helmreleases'],
+    ['helm.toolkit.fluxcd.io', 'v2beta2', 'helmreleases'],
+  ];
+
+  const helmRepoApi = apiFactoryWithNamespace(...(helmRepoVersionArgs as any));
+  const helmReleaseApi = apiFactoryWithNamespace(...(helmReleaseVersionArgs as any));
+
+  await helmRepoApi.post(
+    {
+      apiVersion: 'source.toolkit.fluxcd.io/v1',
+      kind: 'HelmRepository',
+      metadata: {
+        name: KNATIVE_HELM_REPO_NAME,
+        namespace: KNATIVE_HELM_NAMESPACE,
+      },
+      spec: {
+        interval: '10m',
+        url: KNATIVE_HELM_REPO_URL,
+      },
     },
-    spec: {
-      interval: '10m',
-      chart: {
-        spec: {
-          chart: KNATIVE_HELM_CHART,
-          version: '>=0.1.0',
-          sourceRef: {
-            kind: 'HelmRepository',
-            name: KNATIVE_HELM_REPO_NAME,
-            namespace: KNATIVE_HELM_NAMESPACE,
+    {},
+    cluster
+  );
+
+  await helmReleaseApi.post(
+    {
+      apiVersion: 'helm.toolkit.fluxcd.io/v2',
+      kind: 'HelmRelease',
+      metadata: {
+        name: KNATIVE_HELM_RELEASE_NAME,
+        namespace: KNATIVE_HELM_NAMESPACE,
+      },
+      spec: {
+        interval: '10m',
+        chart: {
+          spec: {
+            chart: KNATIVE_HELM_CHART,
+            version: '>=0.1.0',
+            sourceRef: {
+              kind: 'HelmRepository',
+              name: KNATIVE_HELM_REPO_NAME,
+              namespace: KNATIVE_HELM_NAMESPACE,
+            },
           },
         },
       },
     },
-  };
-
-  await apply(helmRepo, cluster);
-  await apply(helmRelease, cluster);
+    {},
+    cluster
+  );
 }
 
 /**
