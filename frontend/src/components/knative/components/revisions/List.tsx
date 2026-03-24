@@ -103,7 +103,7 @@ export function RevisionsList() {
   }, [showClusterColumn]);
 
   if (!isKnativeInstalled) {
-    return <NotInstalledBanner isLoading={isKnativeCheckLoading} />;
+    return <NotInstalledBanner isLoading={isKnativeCheckLoading} clusters={clusters} />;
   }
 
   return (

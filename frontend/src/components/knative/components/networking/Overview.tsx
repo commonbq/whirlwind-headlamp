@@ -271,7 +271,7 @@ export function NetworkingOverview() {
   }
 
   if (!isKnativeInstalled) {
-    return <NotInstalledBanner isLoading={isKnativeCheckLoading} />;
+    return <NotInstalledBanner isLoading={isKnativeCheckLoading} clusters={clusters} />;
   }
 
   return (

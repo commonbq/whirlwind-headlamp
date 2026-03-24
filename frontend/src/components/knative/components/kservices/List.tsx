@@ -583,6 +583,6 @@ export function KServicesList() {
   return isKnativeInstalled ? (
     <KServicesListContents clusters={clusters} />
   ) : (
-    <NotInstalledBanner isLoading={isKnativeCheckLoading} />
+    <NotInstalledBanner isLoading={isKnativeCheckLoading} clusters={clusters} />
   );
 }
