@@ -203,16 +203,4 @@ describe('useSidebarItems', () => {
       expect(React.isValidElement(clusterItem.subtitle)).toBe(true);
     }
   });
-
-  it('should include projects in HOME sidebar', () => {
-    const store = mockStore({}, []);
-
-    const { result } = renderHook(() => useSidebarItems(DefaultSidebars.HOME), {
-      wrapper: wrapper(store),
-    });
-
-    const projectsItem = result.current.find(it => it.name === 'projects');
-    expect(projectsItem).toBeDefined();
-    expect(projectsItem?.url).toBe('/projects');
-  });
 });

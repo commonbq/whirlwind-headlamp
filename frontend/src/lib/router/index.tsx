@@ -84,7 +84,6 @@ import PDBList from '../../components/podDisruptionBudget/List';
 import PortForwardingList from '../../components/portforward';
 import PriorityClassDetails from '../../components/priorityClass/Details';
 import PriorityClassList from '../../components/priorityClass/List';
-import ProjectList from '../../components/project/ProjectList';
 import ReplicaSetList from '../../components/replicaset/List';
 import ResourceQuotaDetails from '../../components/resourceQuota/Details';
 import ResourceQuotaList from '../../components/resourceQuota/List';
@@ -141,18 +140,6 @@ const LazyGraphView = React.lazy(() =>
 
 /** @private */
 const defaultRoutes: { [routeName: string]: Route } = {
-  projects: {
-    path: '/projects',
-    exact: true,
-    name: 'Projects',
-    sidebar: {
-      item: 'projects',
-      sidebar: DefaultSidebars.HOME,
-    },
-    useClusterURL: false,
-    noAuthRequired: true,
-    component: () => <ProjectList />,
-  },
   projectCreateYaml: {
     path: '/project/create-yaml',
     exact: true,
