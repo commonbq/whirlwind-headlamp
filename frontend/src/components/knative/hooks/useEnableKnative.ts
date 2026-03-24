@@ -24,11 +24,24 @@ import { useAuthorization } from './useAuthorization';
 
 // ─── Flux constants ───────────────────────────────────────────────────────────
 const FLUX_NAMESPACE = 'flux-system';
-const FLUX_HELM_RELEASE_CRD = 'helmreleases.helm.toolkit.fluxcd.io';
-const KNATIVE_HELM_REPO_NAME = 'knative-serving-repo';
-const KNATIVE_HELM_REPO_URL = 'https://charts.knative.dev';
-const KNATIVE_HELM_CHART = 'knative-serving';
+/** CRD that confirms the Flux Kustomize Controller is installed. */
+const FLUX_KUSTOMIZATION_CRD = 'kustomizations.kustomize.toolkit.fluxcd.io';
+const KNATIVE_GIT_REPO_NAME = 'knative-serving';
+const KNATIVE_KUSTOMIZATION_NAME = 'knative-serving';
+const KNATIVE_GIT_URL = 'https://github.com/knative/serving';
+/** Path inside the knative/serving repo that contains the core serving config. */
+const KNATIVE_GIT_PATH = './config/core';
+
+// ─── Helm CLI constants ───────────────────────────────────────────────────────
+/**
+ * Community OCI Helm chart for Knative Serving (tried first by the Helm Job).
+ * Falls back to official release manifests if the chart is unavailable.
+ * Knative does not publish official Helm charts to a traditional chart repo;
+ * `https://charts.knative.dev` is not a valid index.
+ */
+const KNATIVE_HELM_OCI_CHART = 'oci://ghcr.io/knative-extensions/helm-charts/knative-serving';
 const KNATIVE_HELM_RELEASE_NAME = 'knative-serving';
+const KNATIVE_HELM_NAMESPACE = 'knative-serving';
 
 // ─── Shared installer Job constants ───────────────────────────────────────────
 const INSTALLER_NAMESPACE = 'default';
@@ -47,15 +60,15 @@ const KNATIVE_CORE_URL = `https://github.com/knative/serving/releases/download/$
 
 /**
  * The installation method that will be (or was) used:
- * - 'flux'     – Flux Helm Controller (HelmRepository + HelmRelease CRDs)
- * - 'helm'     – One-shot Kubernetes Job running `helm install`
+ * - 'flux'     – Flux GitOps (GitRepository + Kustomization from official GitHub)
+ * - 'helm'     – One-shot Kubernetes Job: tries OCI Helm chart, falls back to kubectl apply
  * - 'manifest' – One-shot Kubernetes Job running `kubectl apply -f <urls>`
  */
 export type InstallMethod = 'flux' | 'helm' | 'manifest';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Returns true if the Flux Helm Controller CRD is present on the cluster. */
+/** Returns true if the Flux Kustomize Controller CRD is present on the cluster. */
 function checkFluxInstalled(cluster: string): Promise<boolean> {
   return new Promise(resolve => {
     let cancelFn: (() => void) | null = null;
@@ -70,7 +83,7 @@ function checkFluxInstalled(cluster: string): Promise<boolean> {
 
     const request = CRD.apiGet(
       () => settle(true),
-      FLUX_HELM_RELEASE_CRD,
+      FLUX_KUSTOMIZATION_CRD,
       undefined,
       () => settle(false),
       { cluster }
@@ -114,57 +127,52 @@ async function createInstallerRBAC(cluster: string): Promise<void> {
 // ─── Installation strategies ──────────────────────────────────────────────────
 
 /**
- * Method 1 – Flux Helm Controller.
- * Creates a HelmRepository and a HelmRelease in the flux-system namespace.
+ * Method 1 – Flux GitOps (GitRepository + Kustomization).
+ * Creates a GitRepository pointing to the official Knative serving GitHub repo
+ * at the pinned release tag, then a Kustomization that applies the core serving
+ * config directly from that repo — no Helm chart repository needed.
+ *
  * Uses apiFactoryWithNamespace directly (bypasses resourceDefToApiFactory's
- * API-discovery call) and tries the stable v1/v2 APIs before falling back to
- * the beta versions automatically on 404.
+ * API-discovery call) with the stable v1 APIs for both source and kustomize.
  */
 async function installViaFlux(cluster: string): Promise<void> {
-  // The as-any cast mirrors the same pattern used in KubeObject.apiEndpoint for
-  // classes that declare multiple apiVersion values (e.g. CRD, GatewayClass).
-  const helmRepoApi = apiFactoryWithNamespace(
-    ...([
-      ['source.toolkit.fluxcd.io', 'v1', 'helmrepositories'],
-      ['source.toolkit.fluxcd.io', 'v1beta2', 'helmrepositories'],
-    ] as any)
+  const gitRepoApi = apiFactoryWithNamespace(
+    'source.toolkit.fluxcd.io', 'v1', 'gitrepositories'
   );
-  const helmReleaseApi = apiFactoryWithNamespace(
-    ...([
-      ['helm.toolkit.fluxcd.io', 'v2', 'helmreleases'],
-      ['helm.toolkit.fluxcd.io', 'v2beta2', 'helmreleases'],
-    ] as any)
+  const kustomizationApi = apiFactoryWithNamespace(
+    'kustomize.toolkit.fluxcd.io', 'v1', 'kustomizations'
   );
 
-  await helmRepoApi.post(
+  await gitRepoApi.post(
     {
       apiVersion: 'source.toolkit.fluxcd.io/v1',
-      kind: 'HelmRepository',
-      metadata: { name: KNATIVE_HELM_REPO_NAME, namespace: FLUX_NAMESPACE },
-      spec: { interval: '10m', url: KNATIVE_HELM_REPO_URL },
+      kind: 'GitRepository',
+      metadata: { name: KNATIVE_GIT_REPO_NAME, namespace: FLUX_NAMESPACE },
+      spec: {
+        interval: '10m0s',
+        url: KNATIVE_GIT_URL,
+        ref: { tag: KNATIVE_VERSION },
+      },
     },
     {},
     cluster
   );
 
-  await helmReleaseApi.post(
+  await kustomizationApi.post(
     {
-      apiVersion: 'helm.toolkit.fluxcd.io/v2',
-      kind: 'HelmRelease',
-      metadata: { name: KNATIVE_HELM_RELEASE_NAME, namespace: FLUX_NAMESPACE },
+      apiVersion: 'kustomize.toolkit.fluxcd.io/v1',
+      kind: 'Kustomization',
+      metadata: { name: KNATIVE_KUSTOMIZATION_NAME, namespace: FLUX_NAMESPACE },
       spec: {
-        interval: '10m',
-        chart: {
-          spec: {
-            chart: KNATIVE_HELM_CHART,
-            version: '>=0.1.0',
-            sourceRef: {
-              kind: 'HelmRepository',
-              name: KNATIVE_HELM_REPO_NAME,
-              namespace: FLUX_NAMESPACE,
-            },
-          },
+        interval: '10m0s',
+        path: KNATIVE_GIT_PATH,
+        prune: true,
+        sourceRef: {
+          kind: 'GitRepository',
+          name: KNATIVE_GIT_REPO_NAME,
         },
+        wait: true,
+        timeout: '10m0s',
       },
     },
     {},
@@ -174,7 +182,11 @@ async function installViaFlux(cluster: string): Promise<void> {
 
 /**
  * Method 2 – Direct Helm CLI via a one-shot Kubernetes Job.
- * Pulls the `alpine/helm:3` image and runs `helm upgrade --install`.
+ * Uses `dtzar/helm-kubectl` (ships both helm and kubectl).
+ *
+ * Attempts `helm upgrade --install` from a community OCI chart first.
+ * If the OCI chart is unavailable the Job automatically falls back to
+ * applying the official Knative release manifests via kubectl.
  *
  * All values interpolated into the shell command are module-level compile-time
  * constants (no runtime user input), so there is no shell-injection risk.
@@ -182,12 +194,12 @@ async function installViaFlux(cluster: string): Promise<void> {
 async function installViaHelm(cluster: string): Promise<void> {
   await createInstallerRBAC(cluster);
 
-  const cmd = [
-    `helm repo add ${KNATIVE_HELM_REPO_NAME} ${KNATIVE_HELM_REPO_URL}`,
-    'helm repo update',
-    `helm upgrade --install ${KNATIVE_HELM_RELEASE_NAME} ${KNATIVE_HELM_REPO_NAME}/${KNATIVE_HELM_CHART}`,
-    '--namespace knative-serving --create-namespace --wait',
-  ].join(' && ');
+  // Try OCI Helm chart; on failure fall back to manifest apply.
+  // Helm errors are printed before the fallback so they remain visible in Job logs.
+  const cmd =
+    `helm upgrade --install ${KNATIVE_HELM_RELEASE_NAME} ${KNATIVE_HELM_OCI_CHART}` +
+    ` --namespace ${KNATIVE_HELM_NAMESPACE} --create-namespace --wait` +
+    ` || { kubectl apply -f ${KNATIVE_CRDS_URL} && kubectl apply -f ${KNATIVE_CORE_URL}; }`;
 
   await apply(
     {
@@ -201,7 +213,7 @@ async function installViaHelm(cluster: string): Promise<void> {
           spec: {
             serviceAccountName: INSTALLER_SA_NAME,
             restartPolicy: 'Never',
-            containers: [{ name: 'helm-installer', image: 'alpine/helm:3', command: ['sh', '-c', cmd] }],
+            containers: [{ name: 'helm-installer', image: 'dtzar/helm-kubectl:3.16', command: ['sh', '-c', cmd] }],
           },
         },
       },
@@ -251,9 +263,9 @@ async function installViaManifests(cluster: string): Promise<void> {
 
 /**
  * Determines the best available installation method in priority order:
- *   1. Flux Helm Controller (HelmRepository + HelmRelease CRDs)
- *   2. Direct Helm CLI   (Kubernetes Job running `helm install`)
- *   3. Manifest apply    (Kubernetes Job running `kubectl apply -f <urls>`)
+ *   1. Flux GitOps      (GitRepository + Kustomization from official Knative GitHub)
+ *   2. Direct Helm CLI  (Kubernetes Job: OCI chart, falls back to manifest apply)
+ *   3. Manifest apply   (Kubernetes Job running `kubectl apply -f <urls>`)
  *
  * Exposes:
  * - `isClusterAdmin`       – true when the user can create ClusterRoleBindings

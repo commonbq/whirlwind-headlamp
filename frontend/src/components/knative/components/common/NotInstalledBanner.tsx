@@ -38,10 +38,10 @@ interface MethodInfo {
 
 const METHOD_INFO: Record<InstallMethod, MethodInfo> = {
   flux: {
-    label: 'Flux Helm Controller',
+    label: 'Flux GitOps',
     color: 'primary',
     successMsg:
-      'Knative installation has been initiated via the Flux Helm Controller (HelmRepository + HelmRelease). ' +
+      'Knative installation has been initiated via Flux (GitRepository + Kustomization). ' +
       'It may take a few minutes for Knative to become available.',
   },
   helm: {
