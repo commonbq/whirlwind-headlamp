@@ -138,6 +138,22 @@ const LazyGraphView = React.lazy(() =>
   import('../../components/resourceMap/GraphView').then(it => ({ default: it.GraphView }))
 );
 
+const LazyKServiceDetail = React.lazy(() =>
+  import('../../components/knative').then(m => ({ default: m.KServiceDetail }))
+);
+const LazyKServicesList = React.lazy(() =>
+  import('../../components/knative').then(m => ({ default: m.KServicesList }))
+);
+const LazyRevisionDetail = React.lazy(() =>
+  import('../../components/knative').then(m => ({ default: m.RevisionDetail }))
+);
+const LazyRevisionsList = React.lazy(() =>
+  import('../../components/knative').then(m => ({ default: m.RevisionsList }))
+);
+const LazyNetworkingOverview = React.lazy(() =>
+  import('../../components/knative').then(m => ({ default: m.NetworkingOverview }))
+);
+
 /** @private */
 const defaultRoutes: { [routeName: string]: Route } = {
   projectCreateYaml: {
@@ -972,6 +988,52 @@ const defaultRoutes: { [routeName: string]: Route } = {
     sidebar: 'map',
     isFullWidth: true,
     component: () => <LazyGraphView height="100%" />,
+  },
+  knative: {
+    path: '/knative',
+    exact: true,
+    name: 'Knative',
+    sidebar: 'kservices',
+    component: () => {
+      const history = useHistory();
+      React.useEffect(() => {
+        history.replace(createRouteURL('kservices'));
+      }, []);
+      return <></>;
+    },
+  },
+  kservices: {
+    path: '/knative/services',
+    exact: true,
+    name: 'KServices',
+    sidebar: 'kservices',
+    component: () => <LazyKServicesList />,
+  },
+  kserviceDetails: {
+    path: '/knative/services/:namespace/:name',
+    exact: true,
+    sidebar: 'kservices',
+    component: () => <LazyKServiceDetail />,
+  },
+  revisions: {
+    path: '/knative/revisions',
+    exact: true,
+    name: 'Revisions',
+    sidebar: 'revisions',
+    component: () => <LazyRevisionsList />,
+  },
+  revisionDetails: {
+    path: '/knative/revisions/:namespace/:name',
+    exact: true,
+    sidebar: 'revisions',
+    component: () => <LazyRevisionDetail />,
+  },
+  knetworking: {
+    path: '/knative/networking',
+    exact: true,
+    name: 'Knative Networking',
+    sidebar: 'knetworking',
+    component: () => <LazyNetworkingOverview />,
   },
 };
 

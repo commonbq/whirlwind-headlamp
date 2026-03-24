@@ -444,6 +444,30 @@ export const useSidebarItems = (sidebarName: string = DefaultSidebars.IN_CLUSTER
       });
     }
 
+    inClusterItems.push({
+      name: 'knative',
+      label: 'Knative',
+      icon: 'custom:knative',
+      url: createRouteURL('kservices'),
+      subList: [
+        {
+          name: 'kservices',
+          label: 'KServices',
+          url: createRouteURL('kservices'),
+        },
+        {
+          name: 'revisions',
+          label: 'Revisions',
+          url: createRouteURL('revisions'),
+        },
+        {
+          name: 'knetworking',
+          label: 'Networking',
+          url: createRouteURL('knetworking'),
+        },
+      ],
+    });
+
     // List of sidebars, they act as roots for the sidebar tree
     const sidebarsList: SidebarItemProps[] = [
       { name: DefaultSidebars.HOME, subList: homeItems, label: '' },
