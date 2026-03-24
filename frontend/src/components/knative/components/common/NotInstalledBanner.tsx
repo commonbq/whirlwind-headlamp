@@ -37,19 +37,12 @@ interface MethodInfo {
 }
 
 const METHOD_INFO: Record<InstallMethod, MethodInfo> = {
-  flux: {
-    label: 'Flux GitOps',
+  helm: {
+    label: 'Helm Controller',
     color: 'primary',
     successMsg:
-      'Knative installation has been initiated via Flux (GitRepository + Kustomization). ' +
-      'It may take a few minutes for Knative to become available.',
-  },
-  helm: {
-    label: 'Helm CLI',
-    color: 'secondary',
-    successMsg:
-      'A Kubernetes Job has been created to install Knative Serving using Helm. ' +
-      'It may take a few minutes for the Job to complete and Knative to become available.',
+      'Knative Serving installation has been initiated via the Headlamp Helm Controller. ' +
+      'It may take a few minutes for the installation to complete.',
   },
   manifest: {
     label: 'Manifest Apply',
