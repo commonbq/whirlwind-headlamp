@@ -27,6 +27,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/registry"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/discovery"
@@ -62,6 +63,13 @@ func NewActionConfig(clientConfig clientcmd.ClientConfig, namespace string) (*ac
 	if err != nil {
 		return nil, err
 	}
+
+	registryClient, err := registry.NewClient()
+	if err != nil {
+		return nil, err
+	}
+
+	actionConfig.RegistryClient = registryClient
 
 	return actionConfig, nil
 }
