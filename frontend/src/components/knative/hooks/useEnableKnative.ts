@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { clusterRequest, post } from '../../../lib/k8s/apiProxy';
+import { getHeadlampAPIHeaders } from '../../../helpers/getHeadlampAPIHeaders';
+import { JSON_HEADERS } from '../../../lib/k8s/api/v1/constants';
+import { clusterRequest } from '../../../lib/k8s/apiProxy';
 import ClusterRoleBinding from '../../../lib/k8s/clusterRoleBinding';
 import { useAuthorization } from './useAuthorization';
 
@@ -70,7 +72,7 @@ async function pollHelmStatus(
   for (let i = 0; i < HELM_POLL_MAX_ATTEMPTS; i++) {
     const result = await clusterRequest(
       '/helm/action/status',
-      { cluster },
+      { cluster, headers: getHeadlampAPIHeaders() },
       { name: releaseName, action }
     );
 
@@ -111,9 +113,9 @@ async function pollHelmStatus(
  *   2. Poll  /helm/action/status  → wait for 'success' or 'failed'
  */
 async function installViaHelm(cluster: string): Promise<void> {
-  await post(
-    '/helm/release/install',
-    {
+  await clusterRequest('/helm/release/install', {
+    method: 'POST',
+    body: JSON.stringify({
       name: KNATIVE_RELEASE_NAME,
       namespace: KNATIVE_NAMESPACE,
       description: 'Knative Serving installation via Headlamp',
@@ -122,10 +124,10 @@ async function installViaHelm(cluster: string): Promise<void> {
       values: '',
       createNamespace: true,
       dependencyUpdate: false,
-    },
-    true,
-    { cluster }
-  );
+    }),
+    headers: { ...JSON_HEADERS, ...getHeadlampAPIHeaders() },
+    cluster,
+  });
 
   await pollHelmStatus(cluster, KNATIVE_RELEASE_NAME, 'install');
 }
