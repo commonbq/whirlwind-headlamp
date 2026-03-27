@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-import { Alert, Box, Button, Chip, CircularProgress, Link as MuiLink, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Link as MuiLink,
+  Typography,
+} from '@mui/material';
 import React from 'react';
 import { type InstallMethod, useEnableKnative } from '../../hooks/useEnableKnative';
 
@@ -38,18 +46,10 @@ interface MethodInfo {
 
 const METHOD_INFO: Record<InstallMethod, MethodInfo> = {
   helm: {
-    label: 'Helm Controller',
+    label: 'Helm Operator Flow',
     color: 'primary',
     successMsg:
-      'Knative Serving installation has been initiated via the Headlamp Helm Controller. ' +
-      'It may take a few minutes for the installation to complete.',
-  },
-  manifest: {
-    label: 'Manifest Apply',
-    color: 'default',
-    successMsg:
-      'A Kubernetes Job has been created to install Knative Serving by applying the official manifests. ' +
-      'It may take a few minutes for the Job to complete and Knative to become available.',
+      'Knative Serving has been installed through the Knative Operator flow and is ready to use.',
   },
 };
 
@@ -109,7 +109,11 @@ export function NotInstalledBanner({ isLoading = false, clusters }: NotInstalled
         </Typography>
         <Typography>
           Learn how to{' '}
-          <MuiLink href="https://knative.dev/docs/install/" target="_blank" rel="noopener noreferrer">
+          <MuiLink
+            href="https://knative.dev/docs/install/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             install
           </MuiLink>{' '}
           Knative
@@ -129,9 +133,7 @@ export function NotInstalledBanner({ isLoading = false, clusters }: NotInstalled
         )}
 
         {/* Outcome messages */}
-        {enableSuccess && methodInfo && (
-          <Alert severity="success">{methodInfo.successMsg}</Alert>
-        )}
+        {enableSuccess && methodInfo && <Alert severity="success">{methodInfo.successMsg}</Alert>}
         {enableError && <Alert severity="error">{enableError}</Alert>}
 
         {/* Action button — visible only to cluster-admins before success */}
