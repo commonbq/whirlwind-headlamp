@@ -26,6 +26,7 @@ import PluginSettingsDetails from '../../components/App/PluginSettings/PluginSet
 import Settings from '../../components/App/Settings';
 import SettingsCluster from '../../components/App/Settings/SettingsCluster';
 import SettingsClusters from '../../components/App/Settings/SettingsClusters';
+import { VANILLA_HELM_REPO } from '../../components/app-catalog/constants/catalog';
 import AuthChooser from '../../components/authchooser';
 import KubeConfigLoader from '../../components/cluster/KubeConfigLoader';
 import Overview from '../../components/cluster/Overview';
@@ -1057,7 +1058,7 @@ const defaultRoutes: { [routeName: string]: Route } = {
       const history = useHistory();
       React.useEffect(() => {
         history.replace(createRouteURL('appCatalogCharts'));
-      }, []);
+      }, [history]);
       return <></>;
     },
   },
@@ -1087,7 +1088,7 @@ const defaultRoutes: { [routeName: string]: Route } = {
     exact: true,
     name: 'appCatalogChartDetail',
     sidebar: 'appCatalogCharts',
-    component: () => <LazyChartDetails vanillaHelmRepo="VANILLA_HELM_REPOSITORY" />,
+    component: () => <LazyChartDetails vanillaHelmRepo={VANILLA_HELM_REPO} />,
   },
 };
 

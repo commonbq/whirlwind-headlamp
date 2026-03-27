@@ -117,8 +117,7 @@ function CategoryForCharts({
       getOptionLabel={option => option?.title ?? helmChartCategoryList[0].title}
       defaultValue={helmChartCategoryList[0]}
       value={chartCategory}
-      onChange={(event, newValue) => {
-        // @ts-ignore
+      onChange={(event, newValue: { title: string; value: number } | null) => {
         setChartCategory(oldValue => {
           if ((newValue?.value ?? helmChartCategoryList[0].value) === oldValue.value) {
             return oldValue;
