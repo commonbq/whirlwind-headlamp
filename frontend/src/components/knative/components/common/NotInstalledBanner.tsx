@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Link as MuiLink,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Link as MuiLink, Typography } from '@mui/material';
 import React from 'react';
-import { type InstallMethod, useEnableKnative } from '../../hooks/useEnableKnative';
+import { useEnableKnative } from '../../hooks/useEnableKnative';
 
 interface NotInstalledBannerProps {
   isLoading?: boolean;
@@ -37,38 +29,21 @@ interface NotInstalledBannerProps {
   clusters?: string[];
 }
 
-/** Human-readable label and colour for each install method. */
-interface MethodInfo {
-  label: string;
-  color: 'primary' | 'secondary' | 'default';
-  successMsg: string;
-}
-
-const METHOD_INFO: Record<InstallMethod, MethodInfo> = {
-  helm: {
-    label: 'Helm Operator Flow',
-    color: 'primary',
-    successMsg:
-      'Knative Serving has been installed through the Knative Operator flow and is ready to use.',
-  },
-};
+const SUCCESS_MESSAGE =
+  'Knative Serving has been installed through the Knative Operator flow and is ready to use.';
 
 export function NotInstalledBanner({ isLoading = false, clusters }: NotInstalledBannerProps) {
   const cluster = clusters && clusters.length > 0 ? clusters[0] : undefined;
-  const { isClusterAdmin, isCheckingPermissions, installMethod, enableKnative } =
-    useEnableKnative(cluster);
+  const { isClusterAdmin, isCheckingPermissions, enableKnative } = useEnableKnative(cluster);
 
   const [isEnabling, setIsEnabling] = React.useState(false);
   const [enableError, setEnableError] = React.useState<string | null>(null);
   const [enableSuccess, setEnableSuccess] = React.useState(false);
-  const [usedMethod, setUsedMethod] = React.useState<InstallMethod | null>(null);
-
   async function handleEnableService() {
     setIsEnabling(true);
     setEnableError(null);
     try {
       await enableKnative();
-      setUsedMethod(installMethod);
       setEnableSuccess(true);
     } catch (err) {
       setEnableError(
@@ -86,9 +61,6 @@ export function NotInstalledBanner({ isLoading = false, clusters }: NotInstalled
       </Box>
     );
   }
-
-  const resolvedMethod = usedMethod ?? installMethod;
-  const methodInfo: MethodInfo | null = resolvedMethod ? METHOD_INFO[resolvedMethod] : null;
 
   return (
     <Box display="flex" justifyContent="center" alignItems="center" p={2} minHeight="200px">
@@ -119,21 +91,8 @@ export function NotInstalledBanner({ isLoading = false, clusters }: NotInstalled
           Knative
         </Typography>
 
-        {/* Show which install method will be used, once resolved */}
-        {isClusterAdmin && !enableSuccess && methodInfo && !isCheckingPermissions && (
-          <Typography variant="body2" color="text.secondary">
-            Install method:{' '}
-            <Chip
-              label={methodInfo.label}
-              color={methodInfo.color}
-              size="small"
-              sx={{ verticalAlign: 'middle' }}
-            />
-          </Typography>
-        )}
-
         {/* Outcome messages */}
-        {enableSuccess && methodInfo && <Alert severity="success">{methodInfo.successMsg}</Alert>}
+        {enableSuccess && <Alert severity="success">{SUCCESS_MESSAGE}</Alert>}
         {enableError && <Alert severity="error">{enableError}</Alert>}
 
         {/* Action button — visible only to cluster-admins before success */}

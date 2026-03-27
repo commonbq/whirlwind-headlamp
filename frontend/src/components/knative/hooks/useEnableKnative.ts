@@ -47,13 +47,6 @@ const KnativeServing = makeCustomResourceClass({
   isNamespaced: true,
 });
 
-/**
- * The installation method that will be (or was) used:
- * - 'helm' – headlamp-server Helm controller installing the Knative Operator
- *   and then creating the KnativeServing custom resource.
- */
-export type InstallMethod = 'helm';
-
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -334,7 +327,6 @@ async function installViaHelm(cluster: string): Promise<void> {
  * Exposes:
  * - `isClusterAdmin`        – true when the user can create ClusterRoleBindings
  * - `isCheckingPermissions` – true while the permission check is in flight
- * - `installMethod`         – always 'helm'; null while loading
  * - `enableKnative()`       – triggers the Helm installation and polls for completion
  *
  * @param cluster – The cluster to check permissions for and install Knative on.
@@ -342,7 +334,6 @@ async function installViaHelm(cluster: string): Promise<void> {
 export function useEnableKnative(cluster?: string): {
   isClusterAdmin: boolean | null;
   isCheckingPermissions: boolean;
-  installMethod: InstallMethod | null;
   enableKnative: () => Promise<void>;
 } {
   const { allowed: isClusterAdmin, isLoading: isCheckingPermissions } = useAuthorization({
@@ -351,12 +342,10 @@ export function useEnableKnative(cluster?: string): {
     cluster,
   });
 
-  const installMethod: InstallMethod | null = isCheckingPermissions ? null : 'helm';
-
   async function enableKnative() {
     if (!cluster) throw new Error('No cluster selected.');
     return installViaHelm(cluster);
   }
 
-  return { isClusterAdmin, isCheckingPermissions, installMethod, enableKnative };
+  return { isClusterAdmin, isCheckingPermissions, enableKnative };
 }
