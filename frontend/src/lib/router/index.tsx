@@ -26,6 +26,7 @@ import PluginSettingsDetails from '../../components/App/PluginSettings/PluginSet
 import Settings from '../../components/App/Settings';
 import SettingsCluster from '../../components/App/Settings/SettingsCluster';
 import SettingsClusters from '../../components/App/Settings/SettingsClusters';
+import { VANILLA_HELM_REPO } from '../../components/app-catalog/constants/catalog';
 import AuthChooser from '../../components/authchooser';
 import KubeConfigLoader from '../../components/cluster/KubeConfigLoader';
 import Overview from '../../components/cluster/Overview';
@@ -152,6 +153,19 @@ const LazyRevisionsList = React.lazy(() =>
 );
 const LazyNetworkingOverview = React.lazy(() =>
   import('../../components/knative').then(m => ({ default: m.NetworkingOverview }))
+);
+
+const LazyChartsList = React.lazy(() =>
+  import('../../components/app-catalog').then(m => ({ default: m.ChartsList }))
+);
+const LazyChartDetails = React.lazy(() =>
+  import('../../components/app-catalog').then(m => ({ default: m.ChartDetails }))
+);
+const LazyReleaseList = React.lazy(() =>
+  import('../../components/app-catalog').then(m => ({ default: m.ReleaseList }))
+);
+const LazyReleaseDetail = React.lazy(() =>
+  import('../../components/app-catalog').then(m => ({ default: m.ReleaseDetail }))
 );
 
 /** @private */
@@ -1034,6 +1048,47 @@ const defaultRoutes: { [routeName: string]: Route } = {
     name: 'Knative Networking',
     sidebar: 'knetworking',
     component: () => <LazyNetworkingOverview />,
+  },
+  appCatalog: {
+    path: '/apps',
+    exact: true,
+    name: 'App Catalog',
+    sidebar: 'appCatalogCharts',
+    component: () => {
+      const history = useHistory();
+      React.useEffect(() => {
+        history.replace(createRouteURL('appCatalogCharts'));
+      }, [history]);
+      return <></>;
+    },
+  },
+  appCatalogCharts: {
+    path: '/apps/catalog',
+    exact: true,
+    name: 'appCatalogCharts',
+    sidebar: 'appCatalogCharts',
+    component: () => <LazyChartsList />,
+  },
+  appCatalogReleases: {
+    path: '/apps/installed',
+    exact: true,
+    name: 'appCatalogReleases',
+    sidebar: 'appCatalogReleases',
+    component: () => <LazyReleaseList />,
+  },
+  appCatalogReleaseDetail: {
+    path: '/helm/:namespace/releases/:releaseName',
+    exact: true,
+    name: 'appCatalogReleaseDetail',
+    sidebar: 'appCatalogReleases',
+    component: () => <LazyReleaseDetail />,
+  },
+  appCatalogChartDetail: {
+    path: '/helm/:repoName/charts/:chartName',
+    exact: true,
+    name: 'appCatalogChartDetail',
+    sidebar: 'appCatalogCharts',
+    component: () => <LazyChartDetails vanillaHelmRepo={VANILLA_HELM_REPO} />,
   },
 };
 

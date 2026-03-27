@@ -468,6 +468,25 @@ export const useSidebarItems = (sidebarName: string = DefaultSidebars.IN_CLUSTER
       ],
     });
 
+    inClusterItems.push({
+      name: 'appCatalog',
+      label: 'Apps',
+      icon: 'mdi:apps-box',
+      url: createRouteURL('appCatalogCharts'),
+      subList: [
+        {
+          name: 'appCatalogCharts',
+          label: 'Catalog',
+          url: createRouteURL('appCatalogCharts'),
+        },
+        {
+          name: 'appCatalogReleases',
+          label: 'Installed',
+          url: createRouteURL('appCatalogReleases'),
+        },
+      ],
+    });
+
     // List of sidebars, they act as roots for the sidebar tree
     const sidebarsList: SidebarItemProps[] = [
       { name: DefaultSidebars.HOME, subList: homeItems, label: '' },
