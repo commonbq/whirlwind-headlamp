@@ -96,7 +96,7 @@ export function EditorDialog(props: {
 
         if (!isMounted) return;
 
-        if (!!error) {
+        if (error) {
           enqueueSnackbar(
             t('Error fetching chart versions: {{ message }}', { message: error.message }),
             { variant: 'error', autoHideDuration: 5000 }

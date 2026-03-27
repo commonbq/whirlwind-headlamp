@@ -39,16 +39,16 @@ interface ComponentVersions {
 
 export function CatalogLists() {
   return fetchCatalogs().then(function (response) {
-    const catalogList: Array<Catalog> = new Array<Catalog>();
-    for (let i = 0; i < response.items.length; i++) {
+    const catalogList: Array<Catalog> = [];
+    for (const item of response.items) {
       let serviceUri = '';
-      const metadata = response.items[i].metadata;
+      const metadata = item.metadata;
       if (ANNOTATION_URI in metadata.annotations) {
         serviceUri = metadata.annotations[ANNOTATION_URI];
       }
 
       if (serviceUri === '') {
-        const port = response.items[i].spec.ports[0];
+        const port = item.spec.ports[0];
         serviceUri = port.name + '://' + metadata.name + '.' + metadata.namespace + ':' + port.port;
       }
 
@@ -88,13 +88,7 @@ export function CatalogLists() {
 export function AvailableComponentVersions(chartEntries: any[]) {
   const compVersions = new Map<any, any[]>();
   for (const [key, value] of Object.entries(chartEntries)) {
-    const versions: Array<ComponentVersions> = new Array<ComponentVersions>();
-    for (let i = 0; i < value.length; i++) {
-      const v: ComponentVersions = {
-        version: value[i].version,
-      };
-      versions.push(v);
-    }
+    const versions: Array<ComponentVersions> = value.map((item: any) => ({ version: item.version }));
     compVersions.set(key, versions);
   }
   return compVersions;

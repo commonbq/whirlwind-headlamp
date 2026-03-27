@@ -190,7 +190,7 @@ export default function ChartDetails({ vanillaHelmRepo }: ChartDetailsProps) {
                   </Box>
                 </pre>
               ),
-              // eslint-disable-next-line
+              // eslint-disable-next-line no-unused-vars
               code({ node, className, children, ...props }: any) {
                 const match = /language-(\w+)/.exec(className || '');
                 return match ? (
