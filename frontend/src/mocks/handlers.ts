@@ -96,6 +96,13 @@ export const handlers = [
   http.get(`${BASE}/wsMultiplexer`, () => HttpResponse.error()),
 
   // -------------------------------------------------------------------------
+  // Cluster health – authchooser and other components call /healthz to verify
+  // the cluster is reachable before proceeding.
+  // -------------------------------------------------------------------------
+
+  http.get(`${C}/healthz`, () => new HttpResponse('ok', { status: 200 })),
+
+  // -------------------------------------------------------------------------
   // Kubernetes cluster version
   // -------------------------------------------------------------------------
 
@@ -151,6 +158,43 @@ export const handlers = [
   ),
   http.post(`${BASE}/apis/authorization.k8s.io/v1/selfsubjectaccessreviews`, () =>
     HttpResponse.json(mockSelfSubjectAccessReviewAllowed)
+  ),
+
+  /** testAuth() calls selfsubjectrulesreviews to check cluster permissions */
+  http.post(`${C}/apis/authorization.k8s.io/v1/selfsubjectrulesreviews`, () =>
+    HttpResponse.json({
+      kind: 'SelfSubjectRulesReview',
+      apiVersion: 'authorization.k8s.io/v1',
+      metadata: {},
+      spec: { namespace: 'default' },
+      status: {
+        resourceRules: [
+          {
+            verbs: ['*'],
+            apiGroups: ['*'],
+            resources: ['*'],
+          },
+        ],
+        nonResourceRules: [{ verbs: ['*'], nonResourceURLs: ['*'] }],
+        incomplete: false,
+      },
+    })
+  ),
+
+  /** getClusterUserInfo() calls selfsubjectreviews to get user info */
+  http.post(`${C}/apis/authentication.k8s.io/v1/selfsubjectreviews`, () =>
+    HttpResponse.json({
+      kind: 'SelfSubjectReview',
+      apiVersion: 'authentication.k8s.io/v1',
+      metadata: {},
+      status: {
+        userInfo: {
+          username: 'test-user',
+          uid: 'test-uid',
+          groups: ['system:masters'],
+        },
+      },
+    })
   ),
 
   // -------------------------------------------------------------------------
