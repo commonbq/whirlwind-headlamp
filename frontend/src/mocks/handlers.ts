@@ -22,7 +22,11 @@
 import { http, HttpResponse } from 'msw';
 import {
   mockAPIResourcesAppsV1,
+  mockAPIResourcesNetworkingInternalKnativeDevV1alpha1,
+  mockAPIResourcesServingKnativeDevV1,
+  mockAPIResourcesServingKnativeDevV1beta1,
   mockAPIResourcesV1,
+  mockClusterDomainClaims,
   mockClusterVersion,
   mockConfig,
   mockConfigMapsDefault,
@@ -31,6 +35,11 @@ import {
   mockDeploymentsDefault,
   mockDeploymentsMonitoring,
   mockEventsDefault,
+  mockKnativeCRDs,
+  mockKnativeDomainMappings,
+  mockKnativeServingConfigMaps,
+  mockKRevisionsDefault,
+  mockKServicesDefault,
   mockNamespaces,
   mockNodeMetrics,
   mockNodes,
@@ -142,6 +151,27 @@ export const handlers = [
           name: 'apiextensions.k8s.io',
           versions: [{ groupVersion: 'apiextensions.k8s.io/v1', version: 'v1' }],
           preferredVersion: { groupVersion: 'apiextensions.k8s.io/v1', version: 'v1' },
+        },
+        {
+          name: 'serving.knative.dev',
+          versions: [
+            { groupVersion: 'serving.knative.dev/v1', version: 'v1' },
+            { groupVersion: 'serving.knative.dev/v1beta1', version: 'v1beta1' },
+          ],
+          preferredVersion: { groupVersion: 'serving.knative.dev/v1', version: 'v1' },
+        },
+        {
+          name: 'networking.internal.knative.dev',
+          versions: [
+            {
+              groupVersion: 'networking.internal.knative.dev/v1alpha1',
+              version: 'v1alpha1',
+            },
+          ],
+          preferredVersion: {
+            groupVersion: 'networking.internal.knative.dev/v1alpha1',
+            version: 'v1alpha1',
+          },
         },
       ],
     })
@@ -456,4 +486,110 @@ export const handlers = [
 
   // Iconify CDN – return empty JSON so icon rendering doesn't break
   http.get('https://api.iconify.design/mdi.json', () => HttpResponse.json({})),
+
+  // -------------------------------------------------------------------------
+  // KNative – API discovery
+  // -------------------------------------------------------------------------
+
+  http.get(`${C}/apis/serving.knative.dev/v1`, () =>
+    HttpResponse.json(mockAPIResourcesServingKnativeDevV1)
+  ),
+
+  http.get(`${C}/apis/serving.knative.dev/v1beta1`, () =>
+    HttpResponse.json(mockAPIResourcesServingKnativeDevV1beta1)
+  ),
+
+  http.get(`${C}/apis/networking.internal.knative.dev/v1alpha1`, () =>
+    HttpResponse.json(mockAPIResourcesNetworkingInternalKnativeDevV1alpha1)
+  ),
+
+  // -------------------------------------------------------------------------
+  // KNative – individual CRD lookup (used by isKnativeInstalled)
+  // -------------------------------------------------------------------------
+
+  http.get(
+    `${C}/apis/apiextensions.k8s.io/v1/customresourcedefinitions/:crdName`,
+    ({ params }) => {
+      const { crdName } = params;
+      const crd = mockKnativeCRDs.find(c => c.metadata.name === crdName);
+      if (crd) {
+        return HttpResponse.json(crd);
+      }
+      return new HttpResponse(null, { status: 404 });
+    }
+  ),
+
+  // -------------------------------------------------------------------------
+  // KNative – KServices
+  // -------------------------------------------------------------------------
+
+  http.get(`${C}/apis/serving.knative.dev/v1/services`, () =>
+    HttpResponse.json(mockKServicesDefault)
+  ),
+
+  http.get(`${C}/apis/serving.knative.dev/v1/namespaces/:namespace/services`, ({ params }) => {
+    const { namespace } = params;
+    const items = namespace === 'default' ? mockKServicesDefault.items : [];
+    return HttpResponse.json({ ...mockKServicesDefault, items });
+  }),
+
+  // -------------------------------------------------------------------------
+  // KNative – Revisions
+  // -------------------------------------------------------------------------
+
+  http.get(`${C}/apis/serving.knative.dev/v1/revisions`, () =>
+    HttpResponse.json(mockKRevisionsDefault)
+  ),
+
+  http.get(`${C}/apis/serving.knative.dev/v1/namespaces/:namespace/revisions`, ({ params }) => {
+    const { namespace } = params;
+    const items = namespace === 'default' ? mockKRevisionsDefault.items : [];
+    return HttpResponse.json({ ...mockKRevisionsDefault, items });
+  }),
+
+  // -------------------------------------------------------------------------
+  // KNative – DomainMappings
+  // -------------------------------------------------------------------------
+
+  http.get(`${C}/apis/serving.knative.dev/v1beta1/domainmappings`, () =>
+    HttpResponse.json(mockKnativeDomainMappings)
+  ),
+
+  http.get(
+    `${C}/apis/serving.knative.dev/v1beta1/namespaces/:namespace/domainmappings`,
+    ({ params }) => {
+      const { namespace } = params;
+      const items = namespace === 'default' ? mockKnativeDomainMappings.items : [];
+      return HttpResponse.json({ ...mockKnativeDomainMappings, items });
+    }
+  ),
+
+  // -------------------------------------------------------------------------
+  // KNative – ClusterDomainClaims (cluster-scoped)
+  // -------------------------------------------------------------------------
+
+  http.get(
+    `${C}/apis/networking.internal.knative.dev/v1alpha1/clusterdomainclaims`,
+    () => HttpResponse.json(mockClusterDomainClaims)
+  ),
+
+  // -------------------------------------------------------------------------
+  // knative-serving namespace ConfigMaps
+  // -------------------------------------------------------------------------
+
+  http.get(`${C}/api/v1/namespaces/knative-serving/configmaps`, () =>
+    HttpResponse.json(mockKnativeServingConfigMaps)
+  ),
+
+  http.get(
+    `${C}/api/v1/namespaces/knative-serving/configmaps/:name`,
+    ({ params }) => {
+      const { name } = params;
+      const cm = mockKnativeServingConfigMaps.items.find(c => c.metadata.name === name);
+      if (cm) {
+        return HttpResponse.json(cm);
+      }
+      return new HttpResponse(null, { status: 404 });
+    }
+  ),
 ];

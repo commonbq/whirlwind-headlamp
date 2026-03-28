@@ -121,6 +121,19 @@ export const mockNamespaces = {
       spec: { finalizers: ['kubernetes'] },
       status: { phase: 'Active' },
     },
+    {
+      kind: 'Namespace',
+      apiVersion: 'v1',
+      metadata: {
+        name: 'knative-serving',
+        uid: 'ns-knative-serving-uid',
+        resourceVersion: '103',
+        creationTimestamp: oneDayAgo,
+        labels: { 'kubernetes.io/metadata.name': 'knative-serving' },
+      },
+      spec: { finalizers: ['kubernetes'] },
+      status: { phase: 'Active' },
+    },
   ],
 };
 
@@ -831,14 +844,93 @@ export const mockSelfSubjectAccessReviewAllowed = {
 };
 
 // ---------------------------------------------------------------------------
-// CRDs (empty list)
+// CRDs – includes KNative serving CRDs so isKnativeInstalled() returns true
 // ---------------------------------------------------------------------------
+
+export const mockKnativeCRDs = [
+  {
+    kind: 'CustomResourceDefinition',
+    apiVersion: 'apiextensions.k8s.io/v1',
+    metadata: {
+      name: 'services.serving.knative.dev',
+      uid: 'crd-kservice-uid',
+      resourceVersion: '200',
+      creationTimestamp: oneDayAgo,
+      labels: { 'app.kubernetes.io/name': 'knative-serving' },
+    },
+    spec: {
+      group: 'serving.knative.dev',
+      names: { kind: 'Service', plural: 'services', singular: 'service', shortNames: ['ksvc'] },
+      scope: 'Namespaced',
+      versions: [{ name: 'v1', served: true, storage: true }],
+    },
+    status: { conditions: [{ type: 'Established', status: 'True' }] },
+  },
+  {
+    kind: 'CustomResourceDefinition',
+    apiVersion: 'apiextensions.k8s.io/v1',
+    metadata: {
+      name: 'revisions.serving.knative.dev',
+      uid: 'crd-krevision-uid',
+      resourceVersion: '201',
+      creationTimestamp: oneDayAgo,
+      labels: { 'app.kubernetes.io/name': 'knative-serving' },
+    },
+    spec: {
+      group: 'serving.knative.dev',
+      names: { kind: 'Revision', plural: 'revisions', singular: 'revision' },
+      scope: 'Namespaced',
+      versions: [{ name: 'v1', served: true, storage: true }],
+    },
+    status: { conditions: [{ type: 'Established', status: 'True' }] },
+  },
+  {
+    kind: 'CustomResourceDefinition',
+    apiVersion: 'apiextensions.k8s.io/v1',
+    metadata: {
+      name: 'domainmappings.serving.knative.dev',
+      uid: 'crd-domainmapping-uid',
+      resourceVersion: '202',
+      creationTimestamp: oneDayAgo,
+      labels: { 'app.kubernetes.io/name': 'knative-serving' },
+    },
+    spec: {
+      group: 'serving.knative.dev',
+      names: { kind: 'DomainMapping', plural: 'domainmappings', singular: 'domainmapping' },
+      scope: 'Namespaced',
+      versions: [{ name: 'v1beta1', served: true, storage: true }],
+    },
+    status: { conditions: [{ type: 'Established', status: 'True' }] },
+  },
+  {
+    kind: 'CustomResourceDefinition',
+    apiVersion: 'apiextensions.k8s.io/v1',
+    metadata: {
+      name: 'clusterdomainclaims.networking.internal.knative.dev',
+      uid: 'crd-clusterdomainclaim-uid',
+      resourceVersion: '203',
+      creationTimestamp: oneDayAgo,
+      labels: { 'app.kubernetes.io/name': 'knative-serving' },
+    },
+    spec: {
+      group: 'networking.internal.knative.dev',
+      names: {
+        kind: 'ClusterDomainClaim',
+        plural: 'clusterdomainclaims',
+        singular: 'clusterdomainclaim',
+      },
+      scope: 'Cluster',
+      versions: [{ name: 'v1alpha1', served: true, storage: true }],
+    },
+    status: { conditions: [{ type: 'Established', status: 'True' }] },
+  },
+];
 
 export const mockCRDs = {
   kind: 'CustomResourceDefinitionList',
   apiVersion: 'apiextensions.k8s.io/v1',
   metadata: { resourceVersion: '1000' },
-  items: [],
+  items: mockKnativeCRDs,
 };
 
 // ---------------------------------------------------------------------------
@@ -981,6 +1073,675 @@ export const mockAPIResourcesAppsV1 = {
       singularName: '',
       namespaced: true,
       kind: 'ReplicaSet',
+      verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
+    },
+  ],
+};
+
+// ---------------------------------------------------------------------------
+// KNative mock data
+// ---------------------------------------------------------------------------
+
+// KNative Serving ConfigMaps (in the knative-serving namespace)
+
+export const mockKnativeServingConfigMaps = {
+  kind: 'ConfigMapList',
+  apiVersion: 'v1',
+  metadata: { resourceVersion: '1000' },
+  items: [
+    {
+      kind: 'ConfigMap',
+      apiVersion: 'v1',
+      metadata: {
+        name: 'config-network',
+        namespace: 'knative-serving',
+        uid: 'cm-config-network-uid',
+        resourceVersion: '300',
+        creationTimestamp: oneDayAgo,
+      },
+      data: {
+        'ingress.class': 'istio.ingress.networking.knative.dev',
+        'domainTemplate': '{{.Name}}.{{.Namespace}}.{{.Domain}}',
+      },
+    },
+    {
+      kind: 'ConfigMap',
+      apiVersion: 'v1',
+      metadata: {
+        name: 'config-autoscaler',
+        namespace: 'knative-serving',
+        uid: 'cm-config-autoscaler-uid',
+        resourceVersion: '301',
+        creationTimestamp: oneDayAgo,
+      },
+      data: {
+        'container-concurrency-target-default': '100',
+        'container-concurrency-target-percentage': '0.7',
+        'requests-per-second-target-default': '200',
+        'target-burst-capacity': '211',
+        'stable-window': '60s',
+        'panic-window-percentage': '10.0',
+        'panic-threshold-percentage': '200.0',
+        'max-scale-up-rate': '1000.0',
+        'max-scale-down-rate': '2.0',
+        'enable-scale-to-zero': 'true',
+        'scale-to-zero-grace-period': '30s',
+        'scale-to-zero-pod-retention-period': '0s',
+        'pod-autoscaler-class': 'kpa.autoscaling.knative.dev',
+        'activator-capacity': '100.0',
+        'initial-scale': '1',
+        'allow-zero-initial-scale': 'false',
+        'min-scale': '0',
+        'max-scale': '0',
+        'scale-down-delay': '0s',
+      },
+    },
+    {
+      kind: 'ConfigMap',
+      apiVersion: 'v1',
+      metadata: {
+        name: 'config-defaults',
+        namespace: 'knative-serving',
+        uid: 'cm-config-defaults-uid',
+        resourceVersion: '302',
+        creationTimestamp: oneDayAgo,
+      },
+      data: {
+        'revision-timeout-seconds': '300',
+        'max-revision-timeout-seconds': '600',
+        'revision-response-start-timeout-seconds': '300',
+        'revision-idle-timeout-seconds': '0',
+        'revision-cpu-request': '',
+        'revision-memory-request': '',
+        'revision-cpu-limit': '',
+        'revision-memory-limit': '',
+        'container-name-template': 'user-container',
+        'init-container-name-template': 'init-container',
+        'container-concurrency': '0',
+        'allow-container-concurrency-zero': 'true',
+        'enable-service-links': 'false',
+      },
+    },
+    {
+      kind: 'ConfigMap',
+      apiVersion: 'v1',
+      metadata: {
+        name: 'config-gateway',
+        namespace: 'knative-serving',
+        uid: 'cm-config-gateway-uid',
+        resourceVersion: '303',
+        creationTimestamp: oneDayAgo,
+      },
+      data: {},
+    },
+  ],
+};
+
+// KNative Services (KServices)
+
+export const mockKServicesDefault = {
+  kind: 'ServiceList',
+  apiVersion: 'serving.knative.dev/v1',
+  metadata: { resourceVersion: '1000' },
+  items: [
+    {
+      kind: 'Service',
+      apiVersion: 'serving.knative.dev/v1',
+      metadata: {
+        name: 'hello-world',
+        namespace: 'default',
+        uid: 'ksvc-hello-world-uid',
+        resourceVersion: '500',
+        generation: 3,
+        creationTimestamp: oneDayAgo,
+        labels: {
+          'app.kubernetes.io/name': 'hello-world',
+          'serving.knative.dev/service': 'hello-world',
+        },
+      },
+      spec: {
+        traffic: [{ percent: 100, latestRevision: true }],
+        template: {
+          metadata: {
+            annotations: {
+              'autoscaling.knative.dev/min-scale': '1',
+              'autoscaling.knative.dev/max-scale': '5',
+            },
+          },
+          spec: {
+            containerConcurrency: 0,
+            containers: [
+              {
+                name: 'user-container',
+                image: 'gcr.io/knative-samples/helloworld-go:v1.0.0',
+                env: [{ name: 'TARGET', value: 'World' }],
+                ports: [{ containerPort: 8080, name: 'http1', protocol: 'TCP' }],
+                resources: {
+                  limits: { cpu: '1', memory: '256Mi' },
+                  requests: { cpu: '100m', memory: '128Mi' },
+                },
+              },
+            ],
+          },
+        },
+      },
+      status: {
+        url: 'http://hello-world.default.example.com',
+        latestCreatedRevisionName: 'hello-world-00003',
+        latestReadyRevisionName: 'hello-world-00003',
+        observedGeneration: 3,
+        conditions: [
+          {
+            type: 'Ready',
+            status: 'True',
+            lastTransitionTime: oneHourAgo,
+            reason: 'Ready',
+            message: 'Service is ready.',
+          },
+          {
+            type: 'ConfigurationsReady',
+            status: 'True',
+            lastTransitionTime: oneHourAgo,
+          },
+          {
+            type: 'RoutesReady',
+            status: 'True',
+            lastTransitionTime: oneHourAgo,
+          },
+        ],
+        traffic: [
+          {
+            percent: 100,
+            revisionName: 'hello-world-00003',
+            latestRevision: true,
+          },
+        ],
+      },
+    },
+    {
+      kind: 'Service',
+      apiVersion: 'serving.knative.dev/v1',
+      metadata: {
+        name: 'backend-api',
+        namespace: 'default',
+        uid: 'ksvc-backend-api-uid',
+        resourceVersion: '501',
+        generation: 1,
+        creationTimestamp: oneDayAgo,
+        labels: {
+          'app.kubernetes.io/name': 'backend-api',
+          'networking.knative.dev/visibility': 'cluster-local',
+          'serving.knative.dev/service': 'backend-api',
+        },
+      },
+      spec: {
+        traffic: [{ percent: 100, latestRevision: true }],
+        template: {
+          metadata: {
+            annotations: {
+              'autoscaling.knative.dev/min-scale': '0',
+              'autoscaling.knative.dev/max-scale': '10',
+            },
+            labels: {
+              'networking.knative.dev/visibility': 'cluster-local',
+            },
+          },
+          spec: {
+            containerConcurrency: 10,
+            containers: [
+              {
+                name: 'user-container',
+                image: 'myapp/backend-api:v2.1.0',
+                env: [
+                  { name: 'LOG_LEVEL', value: 'info' },
+                  { name: 'PORT', value: '8080' },
+                ],
+                ports: [{ containerPort: 8080, name: 'http1', protocol: 'TCP' }],
+                resources: {
+                  limits: { cpu: '2', memory: '512Mi' },
+                  requests: { cpu: '200m', memory: '256Mi' },
+                },
+              },
+            ],
+          },
+        },
+      },
+      status: {
+        url: 'http://backend-api.default.svc.cluster.local',
+        latestCreatedRevisionName: 'backend-api-00001',
+        latestReadyRevisionName: 'backend-api-00001',
+        observedGeneration: 1,
+        conditions: [
+          {
+            type: 'Ready',
+            status: 'True',
+            lastTransitionTime: oneHourAgo,
+          },
+          {
+            type: 'ConfigurationsReady',
+            status: 'True',
+            lastTransitionTime: oneHourAgo,
+          },
+          {
+            type: 'RoutesReady',
+            status: 'True',
+            lastTransitionTime: oneHourAgo,
+          },
+        ],
+        traffic: [
+          {
+            percent: 100,
+            revisionName: 'backend-api-00001',
+            latestRevision: true,
+          },
+        ],
+      },
+    },
+    {
+      kind: 'Service',
+      apiVersion: 'serving.knative.dev/v1',
+      metadata: {
+        name: 'image-processor',
+        namespace: 'default',
+        uid: 'ksvc-image-processor-uid',
+        resourceVersion: '502',
+        generation: 2,
+        creationTimestamp: oneDayAgo,
+        labels: {
+          'app.kubernetes.io/name': 'image-processor',
+          'serving.knative.dev/service': 'image-processor',
+        },
+      },
+      spec: {
+        traffic: [
+          { percent: 80, revisionName: 'image-processor-00002', latestRevision: false },
+          { percent: 20, revisionName: 'image-processor-00001', latestRevision: false },
+        ],
+        template: {
+          metadata: {
+            annotations: {
+              'autoscaling.knative.dev/min-scale': '0',
+              'autoscaling.knative.dev/max-scale': '20',
+              'autoscaling.knative.dev/metric': 'rps',
+              'autoscaling.knative.dev/target': '50',
+            },
+          },
+          spec: {
+            containerConcurrency: 0,
+            containers: [
+              {
+                name: 'user-container',
+                image: 'myapp/image-processor:v2.0.0',
+                ports: [{ containerPort: 8080, name: 'http1', protocol: 'TCP' }],
+                resources: {
+                  limits: { cpu: '4', memory: '2Gi' },
+                  requests: { cpu: '500m', memory: '512Mi' },
+                },
+              },
+            ],
+          },
+        },
+      },
+      status: {
+        url: 'http://image-processor.default.example.com',
+        latestCreatedRevisionName: 'image-processor-00002',
+        latestReadyRevisionName: 'image-processor-00002',
+        observedGeneration: 2,
+        conditions: [
+          {
+            type: 'Ready',
+            status: 'Unknown',
+            lastTransitionTime: now,
+            reason: 'Deploying',
+            message: 'Waiting for new revision to become ready.',
+          },
+          {
+            type: 'ConfigurationsReady',
+            status: 'Unknown',
+            lastTransitionTime: now,
+            reason: 'Deploying',
+          },
+          {
+            type: 'RoutesReady',
+            status: 'Unknown',
+            lastTransitionTime: now,
+            reason: 'Deploying',
+          },
+        ],
+        traffic: [
+          { percent: 80, revisionName: 'image-processor-00002', latestRevision: false },
+          { percent: 20, revisionName: 'image-processor-00001', latestRevision: false },
+        ],
+      },
+    },
+  ],
+};
+
+// KNative Revisions
+
+export const mockKRevisionsDefault = {
+  kind: 'RevisionList',
+  apiVersion: 'serving.knative.dev/v1',
+  metadata: { resourceVersion: '1000' },
+  items: [
+    {
+      kind: 'Revision',
+      apiVersion: 'serving.knative.dev/v1',
+      metadata: {
+        name: 'hello-world-00003',
+        namespace: 'default',
+        uid: 'krev-hello-world-00003-uid',
+        resourceVersion: '510',
+        creationTimestamp: oneHourAgo,
+        labels: {
+          'serving.knative.dev/service': 'hello-world',
+          'serving.knative.dev/configuration': 'hello-world',
+          'serving.knative.dev/configurationGeneration': '3',
+        },
+      },
+      spec: {
+        containerConcurrency: 0,
+        timeoutSeconds: 300,
+        containers: [
+          {
+            name: 'user-container',
+            image: 'gcr.io/knative-samples/helloworld-go:v1.0.0',
+            env: [{ name: 'TARGET', value: 'World' }],
+            ports: [{ containerPort: 8080, name: 'http1' }],
+            resources: {
+              limits: { cpu: '1', memory: '256Mi' },
+              requests: { cpu: '100m', memory: '128Mi' },
+            },
+          },
+        ],
+      },
+      status: {
+        conditions: [
+          {
+            type: 'Ready',
+            status: 'True',
+            lastTransitionTime: oneHourAgo,
+          },
+          {
+            type: 'ContainerHealthy',
+            status: 'True',
+            lastTransitionTime: oneHourAgo,
+          },
+          {
+            type: 'ResourcesAvailable',
+            status: 'True',
+            lastTransitionTime: oneHourAgo,
+          },
+        ],
+        imageDigest:
+          'gcr.io/knative-samples/helloworld-go@sha256:abc1234567890abcdef1234567890abcdef1234567890',
+      },
+    },
+    {
+      kind: 'Revision',
+      apiVersion: 'serving.knative.dev/v1',
+      metadata: {
+        name: 'hello-world-00002',
+        namespace: 'default',
+        uid: 'krev-hello-world-00002-uid',
+        resourceVersion: '509',
+        creationTimestamp: oneDayAgo,
+        labels: {
+          'serving.knative.dev/service': 'hello-world',
+          'serving.knative.dev/configuration': 'hello-world',
+          'serving.knative.dev/configurationGeneration': '2',
+        },
+      },
+      spec: {
+        containerConcurrency: 0,
+        timeoutSeconds: 300,
+        containers: [
+          {
+            name: 'user-container',
+            image: 'gcr.io/knative-samples/helloworld-go:v0.9.0',
+            ports: [{ containerPort: 8080, name: 'http1' }],
+            resources: {
+              limits: { cpu: '1', memory: '256Mi' },
+              requests: { cpu: '100m', memory: '128Mi' },
+            },
+          },
+        ],
+      },
+      status: {
+        conditions: [{ type: 'Ready', status: 'True', lastTransitionTime: oneDayAgo }],
+        imageDigest:
+          'gcr.io/knative-samples/helloworld-go@sha256:def0987654321fedcba0987654321fedcba0987654',
+      },
+    },
+    {
+      kind: 'Revision',
+      apiVersion: 'serving.knative.dev/v1',
+      metadata: {
+        name: 'backend-api-00001',
+        namespace: 'default',
+        uid: 'krev-backend-api-00001-uid',
+        resourceVersion: '511',
+        creationTimestamp: oneDayAgo,
+        labels: {
+          'serving.knative.dev/service': 'backend-api',
+          'serving.knative.dev/configuration': 'backend-api',
+          'serving.knative.dev/configurationGeneration': '1',
+        },
+      },
+      spec: {
+        containerConcurrency: 10,
+        timeoutSeconds: 300,
+        containers: [
+          {
+            name: 'user-container',
+            image: 'myapp/backend-api:v2.1.0',
+            ports: [{ containerPort: 8080, name: 'http1' }],
+            resources: {
+              limits: { cpu: '2', memory: '512Mi' },
+              requests: { cpu: '200m', memory: '256Mi' },
+            },
+          },
+        ],
+      },
+      status: {
+        conditions: [{ type: 'Ready', status: 'True', lastTransitionTime: oneDayAgo }],
+        imageDigest: 'myapp/backend-api@sha256:111aaa222bbb333ccc444ddd555eee666fff777000',
+      },
+    },
+    {
+      kind: 'Revision',
+      apiVersion: 'serving.knative.dev/v1',
+      metadata: {
+        name: 'image-processor-00002',
+        namespace: 'default',
+        uid: 'krev-image-processor-00002-uid',
+        resourceVersion: '512',
+        creationTimestamp: now,
+        labels: {
+          'serving.knative.dev/service': 'image-processor',
+          'serving.knative.dev/configuration': 'image-processor',
+          'serving.knative.dev/configurationGeneration': '2',
+        },
+      },
+      spec: {
+        containerConcurrency: 0,
+        containers: [
+          {
+            name: 'user-container',
+            image: 'myapp/image-processor:v2.0.0',
+            ports: [{ containerPort: 8080, name: 'http1' }],
+          },
+        ],
+      },
+      status: {
+        conditions: [
+          {
+            type: 'Ready',
+            status: 'Unknown',
+            lastTransitionTime: now,
+            reason: 'Deploying',
+          },
+        ],
+      },
+    },
+    {
+      kind: 'Revision',
+      apiVersion: 'serving.knative.dev/v1',
+      metadata: {
+        name: 'image-processor-00001',
+        namespace: 'default',
+        uid: 'krev-image-processor-00001-uid',
+        resourceVersion: '513',
+        creationTimestamp: oneDayAgo,
+        labels: {
+          'serving.knative.dev/service': 'image-processor',
+          'serving.knative.dev/configuration': 'image-processor',
+          'serving.knative.dev/configurationGeneration': '1',
+        },
+      },
+      spec: {
+        containerConcurrency: 0,
+        containers: [
+          {
+            name: 'user-container',
+            image: 'myapp/image-processor:v1.0.0',
+            ports: [{ containerPort: 8080, name: 'http1' }],
+          },
+        ],
+      },
+      status: {
+        conditions: [{ type: 'Ready', status: 'True', lastTransitionTime: oneDayAgo }],
+        imageDigest: 'myapp/image-processor@sha256:aaa111bbb222ccc333ddd444eee555fff666000777',
+      },
+    },
+  ],
+};
+
+// KNative Domain Mappings
+
+export const mockKnativeDomainMappings = {
+  kind: 'DomainMappingList',
+  apiVersion: 'serving.knative.dev/v1beta1',
+  metadata: { resourceVersion: '1000' },
+  items: [
+    {
+      kind: 'DomainMapping',
+      apiVersion: 'serving.knative.dev/v1beta1',
+      metadata: {
+        name: 'hello.example.com',
+        namespace: 'default',
+        uid: 'dm-hello-example-uid',
+        resourceVersion: '520',
+        creationTimestamp: oneDayAgo,
+      },
+      spec: {
+        ref: {
+          apiVersion: 'serving.knative.dev/v1',
+          kind: 'Service',
+          name: 'hello-world',
+          namespace: 'default',
+        },
+      },
+      status: {
+        url: 'http://hello.example.com',
+        conditions: [
+          {
+            type: 'Ready',
+            status: 'True',
+            lastTransitionTime: oneHourAgo,
+          },
+        ],
+      },
+    },
+  ],
+};
+
+// KNative Cluster Domain Claims
+
+export const mockClusterDomainClaims = {
+  kind: 'ClusterDomainClaimList',
+  apiVersion: 'networking.internal.knative.dev/v1alpha1',
+  metadata: { resourceVersion: '1000' },
+  items: [
+    {
+      kind: 'ClusterDomainClaim',
+      apiVersion: 'networking.internal.knative.dev/v1alpha1',
+      metadata: {
+        name: 'hello.example.com',
+        uid: 'cdc-hello-example-uid',
+        resourceVersion: '530',
+        creationTimestamp: oneDayAgo,
+      },
+      spec: { namespace: 'default' },
+      status: {},
+    },
+  ],
+};
+
+// API resource lists for KNative API groups
+
+export const mockAPIResourcesServingKnativeDevV1 = {
+  kind: 'APIResourceList',
+  apiVersion: 'v1',
+  groupVersion: 'serving.knative.dev/v1',
+  resources: [
+    {
+      name: 'services',
+      singularName: 'service',
+      namespaced: true,
+      kind: 'Service',
+      verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
+      shortNames: ['ksvc'],
+    },
+    {
+      name: 'revisions',
+      singularName: 'revision',
+      namespaced: true,
+      kind: 'Revision',
+      verbs: ['delete', 'get', 'list', 'watch'],
+    },
+    {
+      name: 'configurations',
+      singularName: 'configuration',
+      namespaced: true,
+      kind: 'Configuration',
+      verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
+    },
+    {
+      name: 'routes',
+      singularName: 'route',
+      namespaced: true,
+      kind: 'Route',
+      verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
+    },
+  ],
+};
+
+export const mockAPIResourcesServingKnativeDevV1beta1 = {
+  kind: 'APIResourceList',
+  apiVersion: 'v1',
+  groupVersion: 'serving.knative.dev/v1beta1',
+  resources: [
+    {
+      name: 'domainmappings',
+      singularName: 'domainmapping',
+      namespaced: true,
+      kind: 'DomainMapping',
+      verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
+    },
+  ],
+};
+
+export const mockAPIResourcesNetworkingInternalKnativeDevV1alpha1 = {
+  kind: 'APIResourceList',
+  apiVersion: 'v1',
+  groupVersion: 'networking.internal.knative.dev/v1alpha1',
+  resources: [
+    {
+      name: 'clusterdomainclaims',
+      singularName: 'clusterdomainclaim',
+      namespaced: false,
+      kind: 'ClusterDomainClaim',
       verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
     },
   ],
