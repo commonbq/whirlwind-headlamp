@@ -109,6 +109,7 @@
   "scripts": {
     "prestart": "npm run make-version",
     "start": "cross-env REACT_APP_HEADLAMP_BACKEND_TOKEN=headlamp vite",
+    "start:test": "cross-env REACT_APP_HEADLAMP_BACKEND_TOKEN=headlamp REACT_APP_TEST_MODE=true vite",
     "preview": "vite preview",
     "prebuild": "npm run make-version",
     "build": "cross-env PUBLIC_URL=./ NODE_OPTIONS=--max-old-space-size=8096 vite build && npx shx rm -f build/frontend/index.baseUrl.html",

@@ -47,6 +47,7 @@
     "frontend:tsc": "cd frontend && npm run tsc",
     "frontend:test": "cd frontend && npm test -- --coverage",
     "frontend:start": "cd frontend && npm start",
+    "frontend:start:test": "cd frontend && npm run start:test",
     "frontend:storybook": "cd frontend && npm run storybook",
     "docs": "cd frontend && npm run build-typedoc",
     "i18n": "cd frontend && npm run i18n && cd ../app && npm run i18n",

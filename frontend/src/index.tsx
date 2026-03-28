@@ -19,9 +19,24 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 
-const container = document.getElementById('root');
-const root = createRoot(container!);
-root.render(<App />);
+async function prepare() {
+  // When REACT_APP_TEST_MODE is set to 'true' the app starts without a real
+  // Kubernetes backend.  MSW intercepts all fetch() calls and returns mock
+  // data so the full UI can be exercised locally or in CI.
+  if (import.meta.env.REACT_APP_TEST_MODE === 'true') {
+    const { worker } = await import('./mocks/browser');
+    await worker.start({
+      // Let non-API requests (fonts, images, etc.) through unchanged.
+      onUnhandledRequest: 'bypass',
+    });
+  }
+}
+
+prepare().then(() => {
+  const container = document.getElementById('root');
+  const root = createRoot(container!);
+  root.render(<App />);
+});
 
 /**
  * We used to have axe a11y check here
