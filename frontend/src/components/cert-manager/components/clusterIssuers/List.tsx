@@ -31,7 +31,7 @@ export function ClusterIssuersList() {
         {
           id: 'status',
           label: 'Status',
-          getValue: item => item.status?.conditions?.[0]?.status,
+          getValue: item => item.ready,
         },
         'age',
       ]}

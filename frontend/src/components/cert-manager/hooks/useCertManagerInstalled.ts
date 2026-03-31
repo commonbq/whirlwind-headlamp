@@ -23,7 +23,7 @@ export function useCertManagerInstalled() {
   useEffect(() => {
     async function checkCertManagerInstalled() {
       const isInstalled = await isCertManagerInstalled();
-      setIsManagerInstalled(!!isInstalled);
+      setIsManagerInstalled(isInstalled);
     }
     checkCertManagerInstalled();
   }, []);

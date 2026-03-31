@@ -145,7 +145,8 @@ export function ConditionsTable({ conditions }: ConditionsTableProps) {
             label: 'Last Transition Time',
             getter: item => <DateLabel date={item.lastTransitionTime} />,
             sort: (a, b) =>
-              new Date(a.lastTransitionTime).getTime() - new Date(b.lastTransitionTime).getTime(),
+              new Date(a.lastTransitionTime ?? '').getTime() -
+              new Date(b.lastTransitionTime ?? '').getTime(),
           },
         ]}
         data={conditions}

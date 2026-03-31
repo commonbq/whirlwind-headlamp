@@ -35,4 +35,8 @@ export class ClusterIssuer extends KubeObject<CertManagerClusterIssuer> {
   get spec() {
     return this.jsonData.spec;
   }
+
+  get ready() {
+    return this.status?.conditions?.find(condition => condition.type === 'Ready')?.status;
+  }
 }
