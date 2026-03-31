@@ -110,20 +110,28 @@ export function fetchChartDetailFromArtifact(chartName: string, repoName: string
 export function fetchChartValues(packageID: string, packageVersion: string) {
   const chartCfg = getCatalogConfig();
   if (!isElectron()) {
-    let requestParam = '';
     if (chartCfg.chartProfile === VANILLA_HELM_REPO) {
       if (CUSTOM_CHART_VALUES_PREFIX !== 'CUSTOM_CHART_VALUES_PREFIX') {
         setChartValuesPrefix(`${CUSTOM_CHART_VALUES_PREFIX}`);
       }
-      requestParam = `${chartCfg.chartValuesPrefix}/${packageID}/${packageVersion}/values.yaml`;
+      const requestParam = `${chartCfg.chartValuesPrefix}/${packageID}/${packageVersion}/values.yaml`;
+      const url =
+        `${SERVICE_PROXY}/${chartCfg.catalogNamespace}/${chartCfg.catalogName}?` +
+        getURLSearchParams(requestParam);
+      return request(url, { isJSON: false }, true, true, {}).then((response: any) => response.text());
     } else if (chartCfg.chartProfile === COMMUNITY_REPO) {
-      requestParam = `api/v1/packages/${packageID}/${packageVersion}/values`;
+      const requestParam = `api/v1/packages/${packageID}/${packageVersion}/values`;
+      const url =
+        `${SERVICE_PROXY}/${chartCfg.catalogNamespace}/${chartCfg.catalogName}?` +
+        getURLSearchParams(requestParam);
+      return request(url, { isJSON: false }, true, true, {}).then((response: any) => response.text());
     }
-    const url =
-      `${SERVICE_PROXY}/${chartCfg.catalogNamespace}/${chartCfg.catalogName}?` +
-      getURLSearchParams(requestParam);
-
-    return request(url, { isJSON: false }, true, true, {}).then((response: any) => response.text());
+    // No catalog configured: proxy through backend to avoid CORS
+    return fetch(`/externalproxy`, {
+      headers: {
+        'Forward-To': `https://artifacthub.io/api/v1/packages/${packageID}/${packageVersion}/values`,
+      },
+    }).then(response => response.text());
   }
 
   return fetch(`http://localhost:4466/externalproxy`, {
