@@ -126,10 +126,12 @@ export function fetchChartValues(packageID: string, packageVersion: string) {
         getURLSearchParams(requestParam);
       return request(url, { isJSON: false }, true, true, {}).then((response: any) => response.text());
     }
-    // No catalog configured: fetch directly from ArtifactHub
-    return fetch(`https://artifacthub.io/api/v1/packages/${packageID}/${packageVersion}/values`).then(
-      response => response.text()
-    );
+    // No catalog configured: proxy through backend to avoid CORS
+    return fetch(`/externalproxy`, {
+      headers: {
+        'Forward-To': `https://artifacthub.io/api/v1/packages/${packageID}/${packageVersion}/values`,
+      },
+    }).then(response => response.text());
   }
 
   return fetch(`http://localhost:4466/externalproxy`, {
