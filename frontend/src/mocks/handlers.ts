@@ -456,4 +456,150 @@ export const handlers = [
 
   // Iconify CDN – return empty JSON so icon rendering doesn't break
   http.get('https://api.iconify.design/mdi.json', () => HttpResponse.json({})),
+
+  // -------------------------------------------------------------------------
+  // Helm / App Catalog endpoints
+  // -------------------------------------------------------------------------
+
+  http.get(`${BASE}/helm/releases/list`, () =>
+    HttpResponse.json({
+      releases: [
+        {
+          name: 'prometheus',
+          namespace: 'monitoring',
+          version: 3,
+          info: {
+            status: 'deployed',
+            description: 'Install complete',
+            last_deployed: new Date(Date.now() - 7200_000).toISOString(),
+          },
+          chart: {
+            metadata: {
+              name: 'prometheus',
+              version: '25.8.0',
+              appVersion: 'v2.48.1',
+              description: 'Prometheus monitoring stack',
+              icon: '',
+            },
+            values: { server: { enabled: true } },
+          },
+          config: {},
+        },
+        {
+          name: 'nginx-ingress',
+          namespace: 'default',
+          version: 1,
+          info: {
+            status: 'deployed',
+            description: 'Install complete',
+            last_deployed: new Date(Date.now() - 86400_000).toISOString(),
+          },
+          chart: {
+            metadata: {
+              name: 'ingress-nginx',
+              version: '4.9.0',
+              appVersion: '1.9.5',
+              description: 'NGINX Ingress controller',
+              icon: '',
+            },
+            values: { controller: { replicaCount: 2 } },
+          },
+          config: { controller: { replicaCount: 3 } },
+        },
+      ],
+    })
+  ),
+
+  http.get(`${BASE}/helm/releases`, ({ request }) => {
+    const url = new URL(request.url);
+    const name = url.searchParams.get('name');
+    const releases: Record<string, any> = {
+      prometheus: {
+        name: 'prometheus',
+        namespace: 'monitoring',
+        version: 3,
+        info: {
+          status: 'deployed',
+          description: 'Install complete',
+          last_deployed: new Date(Date.now() - 7200_000).toISOString(),
+        },
+        chart: {
+          metadata: {
+            name: 'prometheus',
+            version: '25.8.0',
+            appVersion: 'v2.48.1',
+            description: 'Prometheus monitoring stack',
+            icon: '',
+          },
+          values: { server: { enabled: true } },
+        },
+        config: {},
+      },
+    };
+    return HttpResponse.json(releases[name || ''] || null);
+  }),
+
+  http.get(`${BASE}/helm/release/history`, ({ request }) => {
+    const url = new URL(request.url);
+    const name = url.searchParams.get('name');
+    return HttpResponse.json({
+      releases: [
+        {
+          name,
+          namespace: 'monitoring',
+          version: 3,
+          info: {
+            status: 'deployed',
+            description: 'Upgrade complete',
+            last_deployed: new Date(Date.now() - 7200_000).toISOString(),
+          },
+          chart: {
+            metadata: { name: 'prometheus', version: '25.8.0', appVersion: 'v2.48.1' },
+          },
+        },
+        {
+          name,
+          namespace: 'monitoring',
+          version: 2,
+          info: {
+            status: 'superseded',
+            description: 'Upgrade complete',
+            last_deployed: new Date(Date.now() - 14400_000).toISOString(),
+          },
+          chart: {
+            metadata: { name: 'prometheus', version: '25.7.0', appVersion: 'v2.47.0' },
+          },
+        },
+        {
+          name,
+          namespace: 'monitoring',
+          version: 1,
+          info: {
+            status: 'superseded',
+            description: 'Install complete',
+            last_deployed: new Date(Date.now() - 86400_000).toISOString(),
+          },
+          chart: {
+            metadata: { name: 'prometheus', version: '25.6.0', appVersion: 'v2.46.0' },
+          },
+        },
+      ],
+    });
+  }),
+
+  http.get(`${BASE}/helm/charts`, ({ request }) => {
+    const url = new URL(request.url);
+    const filter = url.searchParams.get('filter') || '';
+    return HttpResponse.json({
+      charts: [
+        { name: filter || 'prometheus', version: '25.8.0' },
+        { name: filter || 'prometheus', version: '25.7.0' },
+        { name: filter || 'prometheus', version: '25.6.0' },
+      ],
+    });
+  }),
+
+  http.get(`${BASE}/helm/action/status`, () =>
+    HttpResponse.json({ status: 'success', message: '' })
+  ),
 ];
