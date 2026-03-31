@@ -1,0 +1,281 @@
+import { request } from '../../lib/k8s/apiProxy';
+
+const CUSTOM_HEADLAMP_LABEL = 'headlamp-prometheus=true';
+const COMMON_PROMETHEUS_POD_LABEL = 'app.kubernetes.io/name=prometheus';
+const COMMON_PROMETHEUS_SERVICE_LABEL =
+  'app.kubernetes.io/name=prometheus,app.kubernetes.io/component=server';
+const DEFAULT_PROMETHEUS_PORT = '9090';
+
+export type KubernetesPodListResponseItem = {
+  metadata: {
+    name: string;
+    namespace: string;
+  };
+  spec: {
+    containers: [
+      {
+        name: string;
+        image: string;
+        ports: [
+          {
+            name: string;
+            containerPort: number;
+            protocol: string;
+          }
+        ];
+      }
+    ];
+  };
+};
+
+export type KubernetesPodListResponse = {
+  kind: 'PodList';
+  items: KubernetesPodListResponseItem[];
+};
+
+export type KubernetesServiceListResponseItem = {
+  metadata: {
+    name: string;
+    namespace: string;
+  };
+  spec: {
+    ports: [
+      {
+        name: string;
+        port: number;
+        protocol: string;
+      }
+    ];
+  };
+};
+
+export type KubernetesServiceListResponse = {
+  kind: 'ServiceList';
+  items: KubernetesServiceListResponseItem[];
+};
+
+export type KubernetesSearchResponse = KubernetesPodListResponse | KubernetesServiceListResponse;
+
+export enum KubernetesType {
+  none = 'none',
+  pods = 'pods',
+  services = 'services',
+}
+
+export type PrometheusEndpoint = {
+  type: KubernetesType;
+  name: string | undefined;
+  namespace: string | undefined;
+  port: string | undefined;
+};
+
+export function createPrometheusEndpoint(
+  type: KubernetesType = KubernetesType.none,
+  name: string | undefined = undefined,
+  namespace: string | undefined = undefined,
+  port: string | undefined = undefined
+): PrometheusEndpoint {
+  return {
+    type,
+    name,
+    namespace,
+    port,
+  };
+}
+
+export async function isPrometheusInstalled(): Promise<PrometheusEndpoint> {
+  const podSearchSpecificResponse = await searchKubernetesByLabel(
+    KubernetesType.pods,
+    CUSTOM_HEADLAMP_LABEL
+  );
+  if (podSearchSpecificResponse.type !== KubernetesType.none) {
+    return podSearchSpecificResponse;
+  }
+
+  const serviceSearchSpecificResponse = await searchKubernetesByLabel(
+    KubernetesType.services,
+    CUSTOM_HEADLAMP_LABEL
+  );
+  if (serviceSearchSpecificResponse.type !== KubernetesType.none) {
+    return serviceSearchSpecificResponse;
+  }
+
+  const podSearchResponse = await searchKubernetesByLabel(
+    KubernetesType.pods,
+    COMMON_PROMETHEUS_POD_LABEL
+  );
+  if (podSearchResponse.type !== KubernetesType.none) {
+    return podSearchResponse;
+  }
+
+  const serviceSearchResponse = await searchKubernetesByLabel(
+    KubernetesType.services,
+    COMMON_PROMETHEUS_SERVICE_LABEL
+  );
+  if (serviceSearchResponse.type !== KubernetesType.none) {
+    return serviceSearchResponse;
+  }
+
+  return createPrometheusEndpoint();
+}
+
+async function searchKubernetesByLabel(
+  kubernetesType: KubernetesType,
+  labelSelector: string
+): Promise<PrometheusEndpoint> {
+  if (kubernetesType === KubernetesType.none) {
+    return createPrometheusEndpoint();
+  }
+
+  const queryParams = new URLSearchParams();
+  queryParams.append('labelSelector', labelSelector);
+
+  const searchResponse = await request(`/api/v1/${kubernetesType}?${queryParams}`, {
+    method: 'GET',
+  });
+
+  if (!searchResponse?.kind || ['PodList', 'ServiceList'].indexOf(searchResponse.kind) === -1) {
+    return createPrometheusEndpoint();
+  }
+
+  const searchResponseTyped = searchResponse as KubernetesSearchResponse;
+
+  if (searchResponseTyped.items?.length > 0) {
+    const metadata = searchResponseTyped.items[0].metadata;
+    if (!metadata) {
+      return createPrometheusEndpoint();
+    }
+
+    const prometheusName = metadata.name;
+    const prometheusNamespace = metadata.namespace;
+    const prometheusPorts = getPrometheusPortsFromResponse(searchResponseTyped);
+
+    const testResults = await Promise.all(
+      prometheusPorts.map(async prometheusPort => {
+        const testSuccess = await testPrometheusQuery(
+          kubernetesType,
+          prometheusName,
+          prometheusNamespace,
+          prometheusPort
+        );
+        return {
+          prometheusPort,
+          testSuccess,
+        };
+      })
+    );
+
+    for (const result of testResults) {
+      if (result.testSuccess) {
+        return createPrometheusEndpoint(
+          kubernetesType,
+          prometheusName,
+          prometheusNamespace,
+          result.prometheusPort
+        );
+      }
+    }
+  }
+
+  return createPrometheusEndpoint();
+}
+
+function getPrometheusPortsFromResponse(response: KubernetesSearchResponse): string[] {
+  const ports: string[] = [];
+  if (response.kind === 'PodList') {
+    for (const item of response.items) {
+      for (const container of item.spec.containers) {
+        for (const port of container.ports) {
+          if (port.protocol === 'TCP') {
+            ports.push(String(port.containerPort));
+          }
+        }
+      }
+    }
+  } else if (response.kind === 'ServiceList') {
+    for (const item of response.items) {
+      for (const port of item.spec.ports) {
+        if (port.protocol === 'TCP') {
+          ports.push(String(port.port));
+        }
+      }
+    }
+  }
+
+  if (ports.length === 0) {
+    ports.push(DEFAULT_PROMETHEUS_PORT);
+  }
+
+  return ports;
+}
+
+async function testPrometheusQuery(
+  kubernetesType: KubernetesType,
+  prometheusName: string,
+  prometheusNamespace: string,
+  prometheusPort: string
+): Promise<boolean> {
+  const testSuccess = await fetchMetrics({
+    prefix: `${prometheusNamespace}/${kubernetesType}/${prometheusName}${
+      prometheusPort ? `:${prometheusPort}` : ''
+    }`,
+    query: 'up',
+    from: Math.floor(Date.now() / 1000) - 86400,
+    to: Math.floor(Date.now() / 1000),
+    step: 300,
+  })
+    .then(() => {
+      return true;
+    })
+    .catch(() => {
+      return false;
+    });
+
+  return testSuccess;
+}
+
+export async function fetchMetrics(data: {
+  prefix: string;
+  query: string;
+  from: number;
+  to: number;
+  step: number;
+  subPath?: string;
+}): Promise<object> {
+  const params = new URLSearchParams();
+  if (data.from) {
+    params.append('start', data.from.toString());
+  }
+  if (data.to) {
+    params.append('end', data.to.toString());
+  }
+  if (data.step) {
+    params.append('step', data.step.toString());
+  }
+  if (data.query) {
+    params.append('query', data.query);
+  }
+  let url = `/api/v1/namespaces/${data.prefix}/proxy/api/v1/query_range?${params.toString()}`;
+  if (data.subPath && data.subPath !== '') {
+    if (data.subPath.startsWith('/')) {
+      data.subPath = data.subPath.slice(1);
+    }
+    if (data.subPath.endsWith('/')) {
+      data.subPath = data.subPath.slice(0, -1);
+    }
+    url = `/api/v1/namespaces/${data.prefix}/proxy/${
+      data.subPath
+    }/api/v1/query_range?${params.toString()}`;
+  }
+
+  const response = await request(url, {
+    method: 'GET',
+    isJSON: false,
+  });
+  if (response.status === 200) {
+    return response.json();
+  } else {
+    const error = new Error(response.statusText);
+    return Promise.reject(error);
+  }
+}
