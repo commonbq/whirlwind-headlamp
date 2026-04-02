@@ -54,7 +54,7 @@ export function Settings(props: SettingsProps) {
       onDataChange({
         ...data,
         [selectedCluster]: {
-          isMetricsEnabled: true,
+          isMetricsEnabled: false,
           autoDetect: true,
           defaultTimespan: '24h',
           defaultResolution: 'medium',
@@ -64,7 +64,7 @@ export function Settings(props: SettingsProps) {
   }, [selectedCluster, data, onDataChange]);
 
   const selectedClusterData = data?.[selectedCluster] || {};
-  const isMetricsEnabled = selectedClusterData.isMetricsEnabled ?? true;
+  const isMetricsEnabled = selectedClusterData.isMetricsEnabled ?? false;
   const isAutoDetectEnabled = isMetricsEnabled && (selectedClusterData.autoDetect ?? true);
   const isAddressFieldEnabled = isMetricsEnabled && !isAutoDetectEnabled;
 
