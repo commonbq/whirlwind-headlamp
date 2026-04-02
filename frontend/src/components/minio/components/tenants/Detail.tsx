@@ -20,6 +20,13 @@ import { useMinioInstalled } from '../../hooks/useMinioInstalled';
 import { Tenant, TenantPool } from '../../resources/tenant';
 import { NotInstalledBanner } from '../common/CommonComponents';
 
+function formatBooleanStatus(value: boolean | undefined): string | undefined {
+  if (value == null) {
+    return undefined;
+  }
+  return value ? 'Yes' : 'No';
+}
+
 export function TenantDetail() {
   const { name, namespace } = useParams<{ name: string; namespace: string }>();
   const { isMinioInstalled, isMinioCheckLoading } = useMinioInstalled();
@@ -60,7 +67,7 @@ export function TenantDetail() {
               },
               {
                 name: 'Auto TLS',
-                value: item.spec?.requestAutoCert != null ? (item.spec.requestAutoCert ? 'Enabled' : 'Disabled') : undefined,
+                value: formatBooleanStatus(item.spec?.requestAutoCert),
               },
               {
                 name: 'Mount Path',
@@ -135,11 +142,11 @@ export function TenantDetail() {
                       rows={[
                         {
                           name: 'MinIO',
-                          value: item.spec.exposeServices.minio != null ? (item.spec.exposeServices.minio ? 'Yes' : 'No') : undefined,
+                          value: formatBooleanStatus(item.spec.exposeServices.minio),
                         },
                         {
                           name: 'Console',
-                          value: item.spec.exposeServices.console != null ? (item.spec.exposeServices.console ? 'Yes' : 'No') : undefined,
+                          value: formatBooleanStatus(item.spec.exposeServices.console),
                         },
                       ]}
                     />

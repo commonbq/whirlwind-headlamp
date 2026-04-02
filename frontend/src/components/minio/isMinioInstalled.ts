@@ -23,6 +23,7 @@ export async function isMinioInstalled(): Promise<boolean> {
     });
     return !!response;
   } catch (error) {
+    console.error('MinIO installation check failed:', error);
     return false;
   }
 }
