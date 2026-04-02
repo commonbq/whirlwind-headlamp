@@ -1,11 +1,21 @@
 import { useTranslation } from 'react-i18next';
 import { useCluster } from '../../../../lib/k8s';
-import { Button, Grid, Link, Paper, Typography } from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Link,
+  Paper,
+  Typography,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useHistory } from 'react-router-dom';
+import { useState } from 'react';
 import skeletonImg from '../../assets/chart-skeleton.png';
-import { disableMetrics } from '../../util';
-import { formatBytes, PLUGIN_NAME } from '../../util';
+import { disableMetrics, formatBytes, getConfigStore } from '../../util';
+import { Settings } from '../Settings/Settings';
 
 const learnMoreLink = 'https://github.com/headlamp-k8s/plugins/tree/main/prometheus#readme';
 
@@ -29,44 +39,80 @@ const DismissButton = styled(Button)(({ theme }) => ({
 export function PrometheusNotFoundBanner() {
   const { t } = useTranslation();
   const cluster = useCluster();
-  const history = useHistory();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [pendingData, setPendingData] = useState<Record<string, any> | undefined>(undefined);
+  const configStore = getConfigStore();
+  const useConfig = configStore.useConfig();
+  const currentConfig = useConfig();
+
+  function handleSettingsOpen() {
+    setPendingData(currentConfig ?? {});
+    setSettingsOpen(true);
+  }
+
+  function handleSettingsSave() {
+    if (pendingData !== undefined) {
+      configStore.set(pendingData as any);
+    }
+    setSettingsOpen(false);
+  }
+
+  function handleSettingsCancel() {
+    setSettingsOpen(false);
+    setPendingData(undefined);
+  }
 
   return (
-    <StyledGrid
-      container
-      spacing={2}
-      direction="column"
-      justifyContent="center"
-      alignItems="center"
-    >
-      <Grid item>
-        <Typography variant="h5">{t("Couldn't detect Prometheus in your cluster.")}</Typography>
-        <Typography variant="h6">
-          {t('Either configure prometheus plugin or install prometheus in your cluster.')}
-        </Typography>
-      </Grid>
-      <Grid item>
-        <Typography>
-          <Link
-            onClick={() => history.push(`/settings/plugins/${encodeURIComponent(PLUGIN_NAME)}`)}
-          >
-            {t('Configure Prometheus plugin.')}
-          </Link>
-        </Typography>
-      </Grid>
-      <Grid item>
-        <Typography>
-          <Link href={learnMoreLink} target="_blank">
-            {t('Learn more about enabling advanced charts.')}
-          </Link>
-        </Typography>
-      </Grid>
-      <Grid item>
-        <DismissButton size="small" variant="contained" onClick={() => disableMetrics(cluster)}>
-          {t('Dismiss')}
-        </DismissButton>
-      </Grid>
-    </StyledGrid>
+    <>
+      <StyledGrid
+        container
+        spacing={2}
+        direction="column"
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Grid item>
+          <Typography variant="h5">{t("Couldn't detect Prometheus in your cluster.")}</Typography>
+          <Typography variant="h6">
+            {t('Either configure prometheus plugin or install prometheus in your cluster.')}
+          </Typography>
+        </Grid>
+        <Grid item>
+          <Typography>
+            <Link onClick={handleSettingsOpen} sx={{ cursor: 'pointer' }}>
+              {t('Configure Prometheus plugin.')}
+            </Link>
+          </Typography>
+        </Grid>
+        <Grid item>
+          <Typography>
+            <Link href={learnMoreLink} target="_blank">
+              {t('Learn more about enabling advanced charts.')}
+            </Link>
+          </Typography>
+        </Grid>
+        <Grid item>
+          <DismissButton size="small" variant="contained" onClick={() => disableMetrics(cluster)}>
+            {t('Dismiss')}
+          </DismissButton>
+        </Grid>
+      </StyledGrid>
+      <Dialog open={settingsOpen} onClose={handleSettingsCancel} maxWidth="md" fullWidth>
+        <DialogTitle>{t('Configure Prometheus')}</DialogTitle>
+        <DialogContent>
+          <Settings
+            data={(pendingData ?? currentConfig) || {}}
+            onDataChange={data => setPendingData(data)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleSettingsCancel}>{t('Cancel')}</Button>
+          <Button variant="contained" onClick={handleSettingsSave}>
+            {t('Save')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 
