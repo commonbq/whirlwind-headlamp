@@ -15,22 +15,14 @@
  */
 
 import { ResourceListView } from '../../../../components/common';
-import { useSelectedClusters } from '../../../../lib/k8s';
-import { getCluster } from '../../../../lib/util';
+import { useClusters } from '../../hooks/useClusters';
 import { useMinioInstalled } from '../../hooks/useMinioInstalled';
 import { PolicyBinding } from '../../resources/policyBinding';
 import { NotInstalledBanner } from '../common/CommonComponents';
 
 export function PolicyBindingsList() {
   const { isMinioInstalled, isMinioCheckLoading } = useMinioInstalled();
-  const selectedClusters = useSelectedClusters();
-  const currentCluster = getCluster();
-  const clusters =
-    selectedClusters && selectedClusters.length > 0
-      ? selectedClusters
-      : currentCluster
-      ? [currentCluster]
-      : [];
+  const clusters = useClusters();
 
   return isMinioInstalled ? (
     <ResourceListView
