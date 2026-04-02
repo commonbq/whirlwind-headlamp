@@ -155,6 +155,43 @@ const LazyNetworkingOverview = React.lazy(() =>
   import('../../components/knative').then(m => ({ default: m.NetworkingOverview }))
 );
 
+const LazyCertificatesList = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.CertificatesList }))
+);
+const LazyCertificateDetail = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.CertificateDetail }))
+);
+const LazyCertificateRequestsList = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.CertificateRequestsList }))
+);
+const LazyCertificateRequestDetail = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.CertificateRequestDetail }))
+);
+const LazyChallengesList = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.ChallengesList }))
+);
+const LazyChallengeDetail = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.ChallengeDetail }))
+);
+const LazyClusterIssuersList = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.ClusterIssuersList }))
+);
+const LazyClusterIssuerDetail = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.ClusterIssuerDetail }))
+);
+const LazyIssuersList = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.IssuersList }))
+);
+const LazyIssuerDetail = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.IssuerDetail }))
+);
+const LazyOrdersList = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.OrdersList }))
+);
+const LazyOrderDetail = React.lazy(() =>
+  import('../../components/cert-manager').then(m => ({ default: m.OrderDetail }))
+);
+
 const LazyChartsList = React.lazy(() =>
   import('../../components/app-catalog').then(m => ({ default: m.ChartsList }))
 );
@@ -1048,6 +1085,97 @@ const defaultRoutes: { [routeName: string]: Route } = {
     name: 'Knative Networking',
     sidebar: 'knetworking',
     component: () => <LazyNetworkingOverview />,
+  },
+  certManager: {
+    path: '/cert-manager',
+    exact: true,
+    name: 'cert-manager',
+    sidebar: 'certManagerCertificates',
+    component: () => {
+      const history = useHistory();
+      React.useEffect(() => {
+        history.replace(createRouteURL('certManagerCertificates'));
+      }, [history]);
+      return <></>;
+    },
+  },
+  certManagerCertificates: {
+    path: '/cert-manager/certificates',
+    exact: true,
+    name: 'Certificates',
+    sidebar: 'certManagerCertificates',
+    component: () => <LazyCertificatesList />,
+  },
+  certManagerCertificateDetails: {
+    path: '/cert-manager/certificates/:namespace/:name',
+    exact: true,
+    sidebar: 'certManagerCertificates',
+    component: () => <LazyCertificateDetail />,
+  },
+  certManagerCertificateRequests: {
+    path: '/cert-manager/certificaterequests',
+    exact: true,
+    name: 'Certificate Requests',
+    sidebar: 'certManagerCertificateRequests',
+    component: () => <LazyCertificateRequestsList />,
+  },
+  certManagerCertificateRequestDetails: {
+    path: '/cert-manager/certificaterequests/:namespace/:name',
+    exact: true,
+    sidebar: 'certManagerCertificateRequests',
+    component: () => <LazyCertificateRequestDetail />,
+  },
+  certManagerOrders: {
+    path: '/cert-manager/orders',
+    exact: true,
+    name: 'Orders',
+    sidebar: 'certManagerOrders',
+    component: () => <LazyOrdersList />,
+  },
+  certManagerOrderDetails: {
+    path: '/cert-manager/orders/:namespace/:name',
+    exact: true,
+    sidebar: 'certManagerOrders',
+    component: () => <LazyOrderDetail />,
+  },
+  certManagerChallenges: {
+    path: '/cert-manager/challenges',
+    exact: true,
+    name: 'Challenges',
+    sidebar: 'certManagerChallenges',
+    component: () => <LazyChallengesList />,
+  },
+  certManagerChallengeDetails: {
+    path: '/cert-manager/challenges/:namespace/:name',
+    exact: true,
+    sidebar: 'certManagerChallenges',
+    component: () => <LazyChallengeDetail />,
+  },
+  certManagerClusterIssuers: {
+    path: '/cert-manager/clusterissuers',
+    exact: true,
+    name: 'Cluster Issuers',
+    sidebar: 'certManagerClusterIssuers',
+    component: () => <LazyClusterIssuersList />,
+  },
+  certManagerClusterIssuerDetails: {
+    path: '/cert-manager/clusterissuers/:name',
+    exact: true,
+    sidebar: 'certManagerClusterIssuers',
+    component: () => <LazyClusterIssuerDetail />,
+  },
+  certManagerIssuers: {
+    path: '/cert-manager/issuers',
+    exact: true,
+    name: 'Issuers',
+    sidebar: 'certManagerIssuers',
+    component: () => <LazyIssuersList />,
+  },
+  certManagerIssuerDetails: {
+    path: '/cert-manager/issuers/:namespace/:name',
+    exact: true,
+    sidebar: 'certManagerIssuers',
+    component: () => <LazyIssuerDetail />,
   },
   appCatalog: {
     path: '/apps',

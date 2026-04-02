@@ -469,6 +469,45 @@ export const useSidebarItems = (sidebarName: string = DefaultSidebars.IN_CLUSTER
     });
 
     inClusterItems.push({
+      name: 'certManager',
+      label: 'cert-manager',
+      icon: 'mdi:certificate',
+      url: createRouteURL('certManagerCertificates'),
+      subList: [
+        {
+          name: 'certManagerCertificates',
+          label: 'Certificates',
+          url: createRouteURL('certManagerCertificates'),
+        },
+        {
+          name: 'certManagerCertificateRequests',
+          label: 'Certificate Requests',
+          url: createRouteURL('certManagerCertificateRequests'),
+        },
+        {
+          name: 'certManagerOrders',
+          label: 'Orders',
+          url: createRouteURL('certManagerOrders'),
+        },
+        {
+          name: 'certManagerChallenges',
+          label: 'Challenges',
+          url: createRouteURL('certManagerChallenges'),
+        },
+        {
+          name: 'certManagerClusterIssuers',
+          label: 'Cluster Issuers',
+          url: createRouteURL('certManagerClusterIssuers'),
+        },
+        {
+          name: 'certManagerIssuers',
+          label: 'Issuers',
+          url: createRouteURL('certManagerIssuers'),
+        },
+      ],
+    });
+
+    inClusterItems.push({
       name: 'appCatalog',
       label: 'Apps',
       icon: 'mdi:apps-box',
