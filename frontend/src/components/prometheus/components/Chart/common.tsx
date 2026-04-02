@@ -14,7 +14,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { useState } from 'react';
 import skeletonImg from '../../assets/chart-skeleton.png';
-import { disableMetrics, formatBytes, getConfigStore } from '../../util';
+import { disableMetrics, formatBytes, getConfigStore, ClusterData } from '../../util';
 import { Settings } from '../Settings/Settings';
 
 const learnMoreLink = 'https://github.com/headlamp-k8s/plugins/tree/main/prometheus#readme';
@@ -40,7 +40,9 @@ export function PrometheusNotFoundBanner() {
   const { t } = useTranslation();
   const cluster = useCluster();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [pendingData, setPendingData] = useState<Record<string, any> | undefined>(undefined);
+  const [pendingData, setPendingData] = useState<Record<string, ClusterData> | undefined>(
+    undefined
+  );
   const configStore = getConfigStore();
   const useConfig = configStore.useConfig();
   const currentConfig = useConfig();
@@ -52,7 +54,7 @@ export function PrometheusNotFoundBanner() {
 
   function handleSettingsSave() {
     if (pendingData !== undefined) {
-      configStore.set(pendingData as any);
+      configStore.set(pendingData);
     }
     setSettingsOpen(false);
   }

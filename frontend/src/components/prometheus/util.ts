@@ -8,7 +8,7 @@ import { isPrometheusInstalled, KubernetesType } from './request';
 
 export const PLUGIN_NAME = 'prometheus';
 
-type ClusterData = {
+export type ClusterData = {
   autoDetect?: boolean;
   isMetricsEnabled?: boolean;
   address?: string;
