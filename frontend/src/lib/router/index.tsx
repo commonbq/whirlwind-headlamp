@@ -192,6 +192,19 @@ const LazyOrderDetail = React.lazy(() =>
   import('../../components/cert-manager').then(m => ({ default: m.OrderDetail }))
 );
 
+const LazyMinioTenantsList = React.lazy(() =>
+  import('../../components/minio').then(m => ({ default: m.TenantsList }))
+);
+const LazyMinioTenantDetail = React.lazy(() =>
+  import('../../components/minio').then(m => ({ default: m.TenantDetail }))
+);
+const LazyMinioPolicyBindingsList = React.lazy(() =>
+  import('../../components/minio').then(m => ({ default: m.PolicyBindingsList }))
+);
+const LazyMinioPolicyBindingDetail = React.lazy(() =>
+  import('../../components/minio').then(m => ({ default: m.PolicyBindingDetail }))
+);
+
 const LazyChartsList = React.lazy(() =>
   import('../../components/app-catalog').then(m => ({ default: m.ChartsList }))
 );
@@ -1176,6 +1189,45 @@ const defaultRoutes: { [routeName: string]: Route } = {
     exact: true,
     sidebar: 'certManagerIssuers',
     component: () => <LazyIssuerDetail />,
+  },
+  minio: {
+    path: '/minio',
+    exact: true,
+    name: 'minio',
+    sidebar: 'minioTenants',
+    component: () => {
+      const history = useHistory();
+      React.useEffect(() => {
+        history.replace(createRouteURL('minioTenants'));
+      }, [history]);
+      return <></>;
+    },
+  },
+  minioTenants: {
+    path: '/minio/tenants',
+    exact: true,
+    name: 'Tenants',
+    sidebar: 'minioTenants',
+    component: () => <LazyMinioTenantsList />,
+  },
+  minioTenantDetails: {
+    path: '/minio/tenants/:namespace/:name',
+    exact: true,
+    sidebar: 'minioTenants',
+    component: () => <LazyMinioTenantDetail />,
+  },
+  minioPolicyBindings: {
+    path: '/minio/policybindings',
+    exact: true,
+    name: 'Policy Bindings',
+    sidebar: 'minioPolicyBindings',
+    component: () => <LazyMinioPolicyBindingsList />,
+  },
+  minioPolicyBindingDetails: {
+    path: '/minio/policybindings/:namespace/:name',
+    exact: true,
+    sidebar: 'minioPolicyBindings',
+    component: () => <LazyMinioPolicyBindingDetail />,
   },
   appCatalog: {
     path: '/apps',
