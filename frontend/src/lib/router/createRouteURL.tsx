@@ -99,5 +99,14 @@ export function createRouteURL(routeName?: string, params: RouteURLProps = {}) {
   }
 
   const url = getRoutePath(route);
-  return generatePath(url, fullParams);
+  try {
+    return generatePath(url, fullParams);
+  } catch (e) {
+    console.warn(
+      `[Router] createRouteURL: could not generate path for route "${routeName}". ` +
+        'Some required route parameters may be missing.',
+      e
+    );
+    return '';
+  }
 }
