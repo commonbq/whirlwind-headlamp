@@ -329,7 +329,7 @@ export default function EditorDialog(props: EditorDialogProps) {
     const newItemDefs = obj!;
 
     if (typeof onSave === 'string' && onSave === 'default') {
-      const resourceNames = newItemDefs.map(newItemDef => newItemDef.metadata.name);
+      const resourceNames = newItemDefs.map(newItemDef => newItemDef.metadata?.name);
       const clusterName = (item as KubeObjectIsh)?.cluster || getCluster() || '';
 
       dispatch(
