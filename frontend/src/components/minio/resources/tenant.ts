@@ -108,7 +108,6 @@ export class Tenant extends KubeObject<MinioTenant> {
       namespace: '',
     };
     baseObject.spec = {
-      image: 'quay.io/minio/minio:latest',
       pools: [
         {
           name: 'pool-0',
