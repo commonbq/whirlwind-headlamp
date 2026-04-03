@@ -16,6 +16,7 @@
 
 import './i18n/config';
 import './components/App/icons';
+import { registerPrometheus } from './components/prometheus';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import React, { useMemo } from 'react';
@@ -35,6 +36,7 @@ import { useTypedSelector } from './redux/hooks';
 import store from './redux/stores/store';
 
 setStore(store);
+registerPrometheus();
 
 function AppWithRedux(props: React.PropsWithChildren<{}>) {
   let themeName = useTypedSelector(state => state.theme.name);
