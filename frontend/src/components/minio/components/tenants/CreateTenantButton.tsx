@@ -22,22 +22,21 @@ import { useSelectedClusters } from '../../../../lib/k8s';
 import { Activity } from '../../../activity/Activity';
 import ActionButton from '../../../common/ActionButton';
 import { AuthVisible, EditorDialog } from '../../../common/Resource';
-import { Tenant } from '../../resources/tenant';
-
-const CONFIG_SECRET_NAME = 'minio-env-configuration';
+import { Tenant, TENANT_ENV_SECRET_NAME } from '../../resources/tenant';
 
 function buildTemplate(): string {
   const secret = {
     apiVersion: 'v1',
     kind: 'Secret',
     metadata: {
-      name: CONFIG_SECRET_NAME,
+      name: TENANT_ENV_SECRET_NAME,
       namespace: '',
     },
     type: 'Opaque',
     stringData: {
+      // IMPORTANT: Change the values below before applying.
       'config.env':
-        'export MINIO_ROOT_USER=minio\nexport MINIO_ROOT_PASSWORD=minio123\n',
+        'export MINIO_ROOT_USER=minio\nexport MINIO_ROOT_PASSWORD=<change-me>\n',
     },
   };
 

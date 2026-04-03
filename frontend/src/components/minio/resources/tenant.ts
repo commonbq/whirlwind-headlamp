@@ -95,6 +95,8 @@ export interface MinioTenant extends KubeObjectInterface {
   };
 }
 
+export const TENANT_ENV_SECRET_NAME = 'minio-env-configuration';
+
 export class Tenant extends KubeObject<MinioTenant> {
   static kind = 'Tenant';
   static apiName = 'tenants';
@@ -109,7 +111,7 @@ export class Tenant extends KubeObject<MinioTenant> {
     };
     baseObject.spec = {
       configuration: {
-        name: 'minio-env-configuration',
+        name: TENANT_ENV_SECRET_NAME,
       },
       pools: [
         {

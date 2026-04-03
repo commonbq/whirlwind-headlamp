@@ -29,7 +29,7 @@ export function TenantsList() {
     <ResourceListView
       title="MinIO Tenants"
       resourceClass={Tenant}
-      headerProps={{ titleSideActions: [<CreateTenantButton />] }}
+      headerProps={{ titleSideActions: [<CreateTenantButton key="create-tenant" />] }}
       columns={[
         'name',
         'namespace',
