@@ -15,12 +15,14 @@
  */
 
 import { ResourceListView } from '../../../../components/common';
+import { useClusters } from '../../hooks/useClusters';
 import { useMinioInstalled } from '../../hooks/useMinioInstalled';
 import { PolicyBinding } from '../../resources/policyBinding';
 import { NotInstalledBanner } from '../common/CommonComponents';
 
 export function PolicyBindingsList() {
   const { isMinioInstalled, isMinioCheckLoading } = useMinioInstalled();
+  const clusters = useClusters();
 
   return isMinioInstalled ? (
     <ResourceListView
@@ -48,6 +50,6 @@ export function PolicyBindingsList() {
       ]}
     />
   ) : (
-    <NotInstalledBanner isLoading={isMinioCheckLoading} />
+    <NotInstalledBanner isLoading={isMinioCheckLoading} clusters={clusters} />
   );
 }

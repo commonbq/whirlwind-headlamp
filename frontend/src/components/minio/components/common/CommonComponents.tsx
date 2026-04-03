@@ -14,13 +14,46 @@
  * limitations under the License.
  */
 
-import { Box, CircularProgress, Grid, Link as MuiLink, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Link as MuiLink, Typography } from '@mui/material';
+import React from 'react';
+import { useEnableMinio } from '../../hooks/useEnableMinio';
 
 interface NotInstalledBannerProps {
   isLoading?: boolean;
+  /**
+   * The cluster(s) on which to check permissions and enable MinIO.
+   * When multiple clusters are provided, only the first one is used for the
+   * cluster-admin check and installation target.
+   */
+  clusters?: string[];
 }
 
-export function NotInstalledBanner({ isLoading = false }: NotInstalledBannerProps) {
+const SUCCESS_MESSAGE =
+  'MinIO Operator has been installed and is ready to use.';
+
+export function NotInstalledBanner({ isLoading = false, clusters }: NotInstalledBannerProps) {
+  const cluster = clusters && clusters.length > 0 ? clusters[0] : undefined;
+  const { isClusterAdmin, isCheckingPermissions, enableMinio } = useEnableMinio(cluster);
+
+  const [isEnabling, setIsEnabling] = React.useState(false);
+  const [enableError, setEnableError] = React.useState<string | null>(null);
+  const [enableSuccess, setEnableSuccess] = React.useState(false);
+
+  async function handleEnableService() {
+    setIsEnabling(true);
+    setEnableError(null);
+    try {
+      await enableMinio();
+      setEnableSuccess(true);
+    } catch (err) {
+      setEnableError(
+        err instanceof Error ? err.message : 'An error occurred while enabling MinIO.'
+      );
+    } finally {
+      setIsEnabling(false);
+    }
+  }
+
   if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" p={2} minHeight="200px">
@@ -31,27 +64,54 @@ export function NotInstalledBanner({ isLoading = false }: NotInstalledBannerProp
 
   return (
     <Box display="flex" justifyContent="center" alignItems="center" p={2} minHeight="200px">
-      <Grid container spacing={2} direction="column" justifyContent="center" alignItems="center">
-        <Grid item>
-          <Typography variant="h5">
-            MinIO Operator was not detected on your cluster. If you haven't already, please install
-            it.
-          </Typography>
-        </Grid>
-        <Grid item>
-          <Typography>
-            Learn how to{' '}
-            <MuiLink
-              href="https://min.io/docs/minio/kubernetes/upstream/operations/installation.html"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              install
-            </MuiLink>{' '}
-            MinIO Operator
-          </Typography>
-        </Grid>
-      </Grid>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          width: '100%',
+          maxWidth: 900,
+          textAlign: 'center',
+        }}
+      >
+        <Typography variant="h5">
+          MinIO Operator was not detected on your cluster. If you haven't already, please install
+          it.
+        </Typography>
+        <Typography>
+          Learn how to{' '}
+          <MuiLink
+            href="https://min.io/docs/minio/kubernetes/upstream/operations/installation.html"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            install
+          </MuiLink>{' '}
+          MinIO Operator
+        </Typography>
+
+        {/* Outcome messages */}
+        {enableSuccess && <Alert severity="success">{SUCCESS_MESSAGE}</Alert>}
+        {enableError && <Alert severity="error">{enableError}</Alert>}
+
+        {/* Action button — visible only to cluster-admins before success */}
+        {isClusterAdmin && !enableSuccess && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleEnableService}
+            disabled={isEnabling || isCheckingPermissions}
+          >
+            {isEnabling ? (
+              <CircularProgress size={20} color="inherit" aria-label="Enabling service" />
+            ) : (
+              'Enable Service'
+            )}
+          </Button>
+        )}
+      </Box>
     </Box>
   );
 }
