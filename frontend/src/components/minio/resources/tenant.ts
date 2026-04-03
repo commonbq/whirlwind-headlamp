@@ -101,6 +101,39 @@ export class Tenant extends KubeObject<MinioTenant> {
   static apiVersion = 'minio.min.io/v2';
   static isNamespaced = true;
 
+  static getBaseObject(): MinioTenant {
+    const baseObject = super.getBaseObject() as MinioTenant;
+    baseObject.metadata = {
+      ...baseObject.metadata,
+      namespace: '',
+    };
+    baseObject.spec = {
+      image: 'quay.io/minio/minio:latest',
+      pools: [
+        {
+          name: 'pool-0',
+          servers: 4,
+          volumesPerServer: 4,
+          volumeClaimTemplate: {
+            metadata: {
+              name: 'data',
+            },
+            spec: {
+              accessModes: ['ReadWriteOnce'],
+              resources: {
+                requests: {
+                  storage: '10Gi',
+                },
+              },
+            },
+          },
+        },
+      ],
+      requestAutoCert: false,
+    };
+    return baseObject;
+  }
+
   get currentState(): string {
     return this.jsonData.status?.currentState ?? '';
   }
