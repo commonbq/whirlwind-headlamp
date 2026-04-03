@@ -2,8 +2,8 @@ import { request } from '../../lib/k8s/apiProxy';
 
 const CUSTOM_HEADLAMP_LABEL = 'headlamp-prometheus=true';
 const COMMON_PROMETHEUS_POD_LABEL = 'app.kubernetes.io/name=prometheus';
-const COMMON_PROMETHEUS_SERVICE_LABEL =
-  'app.kubernetes.io/name=prometheus,app.kubernetes.io/component=server';
+const COMMON_PROMETHEUS_SERVICE_LABEL = 'app.kubernetes.io/name=prometheus';
+const COMMON_PROMETHEUS_SERVICE_LABEL_LEGACY = 'app=prometheus';
 const DEFAULT_PROMETHEUS_PORT = '9090';
 
 export type KubernetesPodListResponseItem = {
@@ -114,6 +114,14 @@ export async function isPrometheusInstalled(): Promise<PrometheusEndpoint> {
   );
   if (serviceSearchResponse.type !== KubernetesType.none) {
     return serviceSearchResponse;
+  }
+
+  const serviceSearchLegacyResponse = await searchKubernetesByLabel(
+    KubernetesType.services,
+    COMMON_PROMETHEUS_SERVICE_LABEL_LEGACY
+  );
+  if (serviceSearchLegacyResponse.type !== KubernetesType.none) {
+    return serviceSearchLegacyResponse;
   }
 
   return createPrometheusEndpoint();
