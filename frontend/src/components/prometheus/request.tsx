@@ -1,8 +1,12 @@
 import { request } from '../../lib/k8s/apiProxy';
 
 const CUSTOM_HEADLAMP_LABEL = 'headlamp-prometheus=true';
+// Both pods and services are queried with the same standard label; kept as separate
+// constants to make the intent at each call site explicit.
 const COMMON_PROMETHEUS_POD_LABEL = 'app.kubernetes.io/name=prometheus';
 const COMMON_PROMETHEUS_SERVICE_LABEL = 'app.kubernetes.io/name=prometheus';
+// Older Prometheus Helm chart versions and some custom deployments use the
+// non-namespaced `app` label instead of `app.kubernetes.io/name`.
 const COMMON_PROMETHEUS_SERVICE_LABEL_LEGACY = 'app=prometheus';
 const DEFAULT_PROMETHEUS_PORT = '9090';
 
