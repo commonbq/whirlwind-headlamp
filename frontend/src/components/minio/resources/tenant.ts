@@ -108,6 +108,9 @@ export class Tenant extends KubeObject<MinioTenant> {
       namespace: '',
     };
     baseObject.spec = {
+      configuration: {
+        name: 'minio-env-configuration',
+      },
       pools: [
         {
           name: 'pool-0',
