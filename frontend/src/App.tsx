@@ -16,7 +16,6 @@
 
 import './i18n/config';
 import './components/App/icons';
-import { registerPrometheus } from './components/prometheus';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import React, { useMemo } from 'react';
@@ -26,6 +25,8 @@ import AppContainer from './components/App/AppContainer';
 import { useCurrentAppTheme } from './components/App/themeSlice';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ErrorComponent from './components/common/ErrorPage';
+import { registerLoki } from './components/loki';
+import { registerPrometheus } from './components/prometheus';
 import i18n from './i18n/config';
 import { useElectronI18n } from './i18n/electronI18n';
 import ThemeProviderNexti18n from './i18n/ThemeProviderNexti18n';
@@ -37,6 +38,7 @@ import store from './redux/stores/store';
 
 setStore(store);
 registerPrometheus();
+registerLoki();
 
 function AppWithRedux(props: React.PropsWithChildren<{}>) {
   let themeName = useTypedSelector(state => state.theme.name);
