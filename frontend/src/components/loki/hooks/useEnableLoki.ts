@@ -87,20 +87,17 @@ async function getHelmRelease(
   name: string,
   namespace: string
 ): Promise<any | null> {
-  const query = new URLSearchParams({ name, namespace }).toString();
+  // Use the list endpoint instead of the get-single endpoint to avoid a 404
+  // error (and its associated error notification) when the release does not exist.
+  const query = new URLSearchParams({ namespace, filter: `^${name}$` }).toString();
 
-  try {
-    return await clusterRequest(`/helm/releases?${query}`, {
-      cluster,
-      headers: getHeadlampAPIHeaders(),
-    });
-  } catch (err) {
-    if ((err as { status?: number }).status === 404) {
-      return null;
-    }
+  const response = (await clusterRequest(`/helm/releases/list?${query}`, {
+    cluster,
+    headers: getHeadlampAPIHeaders(),
+  })) as { releases?: any[] };
 
-    throw err;
-  }
+  const releases = response?.releases ?? [];
+  return releases.length > 0 ? releases[0] : null;
 }
 
 async function ensureLokiRepository(cluster: string): Promise<void> {
