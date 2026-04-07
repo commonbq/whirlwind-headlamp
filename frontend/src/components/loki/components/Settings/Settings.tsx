@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { useClustersConf } from '../../../../lib/k8s';
 import { request } from '../../../../lib/k8s/apiProxy';
 import { NameValueTable } from '../../../common';
+import { buildLokiBasePath } from '../../request';
 
 function isValidAddress(address: string): boolean {
   const regex = /^[a-z0-9-]+\/[a-z0-9-]+:[0-9]+$/;
@@ -99,13 +100,8 @@ export function Settings(props: SettingsProps) {
       const [namespace, serviceAndPort] = selectedClusterData.address.split('/');
       const [service, port] = serviceAndPort.split(':');
 
-      let subPath = selectedClusterData.subPath || '';
-      if (subPath && !subPath.startsWith('/')) {
-        subPath = '/' + subPath;
-      }
-
-      const basePath = subPath ? `${subPath}/loki` : 'loki';
-      const proxyUrl = `/clusters/${selectedCluster}/api/v1/namespaces/${namespace}/services/${service}:${port}/proxy${basePath}/ready`;
+      const basePath = buildLokiBasePath(selectedClusterData.subPath);
+      const proxyUrl = `/clusters/${selectedCluster}/api/v1/namespaces/${namespace}/services/${service}:${port}/proxy/${basePath}/ready`;
       await request(proxyUrl, { method: 'GET', isJSON: false });
 
       setTestStatus('success');

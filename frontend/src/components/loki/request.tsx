@@ -16,6 +16,16 @@
 
 import { request } from '../../lib/k8s/apiProxy';
 
+/**
+ * Normalises a subPath string and combines it with the Loki API base path.
+ * Returns e.g. "my-prefix/loki" or just "loki" when subPath is empty.
+ */
+export function buildLokiBasePath(subPath: string | null | undefined): string {
+  if (!subPath) return 'loki';
+  const trimmed = subPath.replace(/^\/+|\/+$/g, '');
+  return trimmed ? `${trimmed}/loki` : 'loki';
+}
+
 const CUSTOM_HEADLAMP_LABEL = 'headlamp-loki=true';
 const COMMON_LOKI_SERVICE_LABEL = 'app.kubernetes.io/name=loki';
 const COMMON_LOKI_SERVICE_LABEL_LEGACY = 'app=loki';
@@ -80,6 +90,7 @@ async function searchServicesByLabel(labelSelector: string): Promise<LokiEndpoin
   });
 
   if (response?.kind !== 'ServiceList' || !Array.isArray(response.items)) {
+    console.debug('Loki: unexpected response from service search', response?.kind);
     return createLokiEndpoint();
   }
 
@@ -148,11 +159,7 @@ export async function fetchLokiLogs(data: {
   params.append('limit', String(data.limit ?? 1000));
   params.append('direction', 'forward');
 
-  let subPath = data.subPath ?? '';
-  if (subPath.startsWith('/')) subPath = subPath.slice(1);
-  if (subPath.endsWith('/')) subPath = subPath.slice(0, -1);
-
-  const basePath = subPath ? `${subPath}/loki` : 'loki';
+  const basePath = buildLokiBasePath(data.subPath);
   const url = `/api/v1/namespaces/${data.prefix}/proxy/${basePath}/api/v1/query_range?${params.toString()}`;
 
   const response = await request(url, { method: 'GET', isJSON: false });

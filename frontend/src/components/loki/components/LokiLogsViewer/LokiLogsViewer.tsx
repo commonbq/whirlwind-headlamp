@@ -101,6 +101,7 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
   const [logLines, setLogLines] = useState<string[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const defaultTimespan = getLokiTimespan(cluster);
   const defaultLimit = getLokiLimit(cluster);
@@ -135,6 +136,8 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
   }, [clusterConfig, cluster]);
 
   // Fetch logs whenever lokiPrefix or query params change
+  const resourceNamespace = resource.jsonData.metadata.namespace;
+  const resourceName = resource.jsonData.metadata.name;
   useEffect(() => {
     if (lokiState !== LokiState.INSTALLED || !lokiPrefix) return;
 
@@ -165,7 +168,7 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
       .finally(() => {
         setIsFetching(false);
       });
-  }, [lokiState, lokiPrefix, timespan, limit, resource]);
+  }, [lokiState, lokiPrefix, timespan, limit, resourceNamespace, resourceName, refreshTick]);
 
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
@@ -187,7 +190,7 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
               <Button
                 variant="outlined"
                 size="small"
-                onClick={() => setLokiState(prev => (prev === LokiState.INSTALLED ? LokiState.LOADING : LokiState.INSTALLED))}
+                onClick={() => setRefreshTick(t => t + 1)}
                 startIcon={<Icon icon="mdi:refresh" />}
                 disabled={isFetching}
                 sx={{ filter: 'grayscale(1.0)' }}

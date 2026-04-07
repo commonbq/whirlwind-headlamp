@@ -37,11 +37,8 @@ export function LokiVisibilityButton({ resource }: LokiVisibilityButtonProps) {
   const [isEnabled, setIsEnabled] = useState(false);
 
   useEffect(() => {
-    const enabled = clusterConfig?.[cluster]?.isLogsEnabled ?? false;
-    if (enabled !== isEnabled) {
-      setIsEnabled(enabled);
-    }
-  }, [clusterConfig]);
+    setIsEnabled(clusterConfig?.[cluster]?.isLogsEnabled ?? false);
+  }, [clusterConfig, cluster, isEnabled]);
 
   if (!LogEnabledKinds.includes(resource?.jsonData?.kind)) {
     return null;
