@@ -29,9 +29,19 @@ const LOKI_CHART = `${LOKI_REPOSITORY_NAME}/loki`;
 const HELM_POLL_INTERVAL_MS = 5000;
 const HELM_POLL_MAX_ATTEMPTS = 60;
 
-// Minimal values for a single-binary Loki deployment without authentication.
+// Minimal values for a single-binary Loki deployment using filesystem storage,
+// without authentication. Bucket names are required by the chart even for
+// filesystem storage (they are used as local directory names).
 const LOKI_HELM_VALUES = `loki:
   auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+    bucketNames:
+      chunks: chunks
+      ruler: ruler
+      admin: admin
 deploymentMode: SingleBinary
 singleBinary:
   replicas: 1
