@@ -8,6 +8,9 @@ const COMMON_PROMETHEUS_SERVICE_LABEL = 'app.kubernetes.io/name=prometheus';
 // Older Prometheus Helm chart versions and some custom deployments use the
 // non-namespaced `app` label instead of `app.kubernetes.io/name`.
 const COMMON_PROMETHEUS_SERVICE_LABEL_LEGACY = 'app=prometheus';
+// The Prometheus Operator (used by kube-prometheus-stack) creates a service named
+// `prometheus-operated` with this label when it reconciles a Prometheus CR.
+const OPERATOR_PROMETHEUS_SERVICE_LABEL = 'operated-prometheus=true';
 const DEFAULT_PROMETHEUS_PORT = '9090';
 
 export type KubernetesPodListResponseItem = {
@@ -20,7 +23,7 @@ export type KubernetesPodListResponseItem = {
       {
         name: string;
         image: string;
-        ports: [
+        ports?: [
           {
             name: string;
             containerPort: number;
@@ -43,7 +46,7 @@ export type KubernetesServiceListResponseItem = {
     namespace: string;
   };
   spec: {
-    ports: [
+    ports?: [
       {
         name: string;
         port: number;
@@ -128,6 +131,16 @@ export async function isPrometheusInstalled(): Promise<PrometheusEndpoint> {
     return serviceSearchLegacyResponse;
   }
 
+  // The Prometheus Operator (used by kube-prometheus-stack) creates a service named
+  // `prometheus-operated` that is accessible via the Kubernetes API proxy.
+  const serviceSearchOperatorResponse = await searchKubernetesByLabel(
+    KubernetesType.services,
+    OPERATOR_PROMETHEUS_SERVICE_LABEL
+  );
+  if (serviceSearchOperatorResponse.type !== KubernetesType.none) {
+    return serviceSearchOperatorResponse;
+  }
+
   return createPrometheusEndpoint();
 }
 
@@ -153,38 +166,40 @@ async function searchKubernetesByLabel(
   const searchResponseTyped = searchResponse as KubernetesSearchResponse;
 
   if (searchResponseTyped.items?.length > 0) {
-    const metadata = searchResponseTyped.items[0].metadata;
-    if (!metadata) {
-      return createPrometheusEndpoint();
-    }
+    for (const item of searchResponseTyped.items) {
+      const metadata = item.metadata;
+      if (!metadata) {
+        continue;
+      }
 
-    const prometheusName = metadata.name;
-    const prometheusNamespace = metadata.namespace;
-    const prometheusPorts = getPrometheusPortsFromResponse(searchResponseTyped);
+      const prometheusName = metadata.name;
+      const prometheusNamespace = metadata.namespace;
+      const prometheusPorts = getPrometheusPortsFromItem(searchResponseTyped.kind, item);
 
-    const testResults = await Promise.all(
-      prometheusPorts.map(async prometheusPort => {
-        const testSuccess = await testPrometheusQuery(
-          kubernetesType,
-          prometheusName,
-          prometheusNamespace,
-          prometheusPort
-        );
-        return {
-          prometheusPort,
-          testSuccess,
-        };
-      })
-    );
+      const testResults = await Promise.all(
+        prometheusPorts.map(async prometheusPort => {
+          const testSuccess = await testPrometheusQuery(
+            kubernetesType,
+            prometheusName,
+            prometheusNamespace,
+            prometheusPort
+          );
+          return {
+            prometheusPort,
+            testSuccess,
+          };
+        })
+      );
 
-    for (const result of testResults) {
-      if (result.testSuccess) {
-        return createPrometheusEndpoint(
-          kubernetesType,
-          prometheusName,
-          prometheusNamespace,
-          result.prometheusPort
-        );
+      for (const result of testResults) {
+        if (result.testSuccess) {
+          return createPrometheusEndpoint(
+            kubernetesType,
+            prometheusName,
+            prometheusNamespace,
+            result.prometheusPort
+          );
+        }
       }
     }
   }
@@ -192,24 +207,25 @@ async function searchKubernetesByLabel(
   return createPrometheusEndpoint();
 }
 
-function getPrometheusPortsFromResponse(response: KubernetesSearchResponse): string[] {
+function getPrometheusPortsFromItem(
+  kind: KubernetesSearchResponse['kind'],
+  item: KubernetesSearchResponse['items'][number]
+): string[] {
   const ports: string[] = [];
-  if (response.kind === 'PodList') {
-    for (const item of response.items) {
-      for (const container of item.spec.containers) {
-        for (const port of container.ports) {
-          if (port.protocol === 'TCP') {
-            ports.push(String(port.containerPort));
-          }
+  if (kind === 'PodList') {
+    const podItem = item as KubernetesPodListResponseItem;
+    for (const container of podItem.spec.containers) {
+      for (const port of container.ports ?? []) {
+        if (port.protocol === 'TCP') {
+          ports.push(String(port.containerPort));
         }
       }
     }
-  } else if (response.kind === 'ServiceList') {
-    for (const item of response.items) {
-      for (const port of item.spec.ports) {
-        if (port.protocol === 'TCP') {
-          ports.push(String(port.port));
-        }
+  } else if (kind === 'ServiceList') {
+    const serviceItem = item as KubernetesServiceListResponseItem;
+    for (const port of serviceItem.spec.ports ?? []) {
+      if (port.protocol === 'TCP') {
+        ports.push(String(port.port));
       }
     }
   }
