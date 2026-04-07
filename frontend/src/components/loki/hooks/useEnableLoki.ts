@@ -142,7 +142,7 @@ async function ensureLokiInstalled(cluster: string): Promise<void> {
       description: 'Loki installation via Headlamp',
       chart: LOKI_CHART,
       version: '',
-      values: LOKI_HELM_VALUES,
+      values: btoa(unescape(encodeURIComponent(LOKI_HELM_VALUES))),
       createNamespace: true,
       dependencyUpdate: false,
     }),
