@@ -19,6 +19,7 @@ import { useClusters } from '../../hooks/useClusters';
 import { useMinioInstalled } from '../../hooks/useMinioInstalled';
 import { Tenant } from '../../resources/tenant';
 import { NotInstalledBanner } from '../common/CommonComponents';
+import { CreateTenantButton } from './CreateTenantButton';
 
 export function TenantsList() {
   const { isMinioInstalled, isMinioCheckLoading } = useMinioInstalled();
@@ -28,6 +29,7 @@ export function TenantsList() {
     <ResourceListView
       title="MinIO Tenants"
       resourceClass={Tenant}
+      headerProps={{ titleSideActions: [<CreateTenantButton key="create-tenant" />] }}
       columns={[
         'name',
         'namespace',
