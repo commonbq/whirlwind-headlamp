@@ -283,7 +283,9 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
                   }}
                 >
                   {isEnablingLoki ? (
-                    <CircularProgress size={20} color="inherit" aria-label={t('Enabling service')} />
+                    <Box role="status" aria-live="polite" display="flex" alignItems="center">
+                      <CircularProgress size={20} color="inherit" aria-label={t('Enabling service')} />
+                    </Box>
                   ) : (
                     t('Enable Service')
                   )}
