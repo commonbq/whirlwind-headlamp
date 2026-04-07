@@ -18,6 +18,7 @@ import { Icon } from '@iconify/react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Select from '@mui/material/Select';
@@ -28,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { useCluster } from '../../../../lib/k8s';
 import { KubeObject } from '../../../../lib/k8s/KubeObject';
 import { Loader, SectionBox } from '../../../common';
+import { useEnableLoki } from '../../hooks/useEnableLoki';
 import { fetchLokiLogs, LokiResponse, LokiStream } from '../../request';
 import {
   getConfigStore,
@@ -95,6 +97,13 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
   const configStore = getConfigStore();
   const useClusterConfig = configStore.useConfig();
   const clusterConfig = useClusterConfig();
+
+  const { isClusterAdmin, isCheckingPermissions, enableLoki } = useEnableLoki(
+    clusterName ?? undefined
+  );
+  const [isEnablingLoki, setIsEnablingLoki] = useState(false);
+  const [enableLokiError, setEnableLokiError] = useState<string | null>(null);
+  const [enableLokiSuccess, setEnableLokiSuccess] = useState(false);
 
   const [lokiState, setLokiState] = useState<LokiState>(LokiState.LOADING);
   const [lokiPrefix, setLokiPrefix] = useState<string | null>(null);
@@ -238,11 +247,50 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
         )}
 
         {lokiState === LokiState.NOT_FOUND && (
-          <Alert severity="info">
-            {t(
-              "Loki was not detected in your cluster. Enable Loki logs in the plugin settings and provide the service address."
+          <Box display="flex" flexDirection="column" gap={1}>
+            <Alert severity="info">
+              {t(
+                "Loki was not detected in your cluster. Enable Loki logs in the plugin settings and provide the service address."
+              )}
+            </Alert>
+            {enableLokiSuccess && (
+              <Alert severity="success">
+                {t('Loki has been installed and is ready to use.')}
+              </Alert>
             )}
-          </Alert>
+            {enableLokiError && <Alert severity="error">{enableLokiError}</Alert>}
+            {isClusterAdmin && !enableLokiSuccess && (
+              <Box>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={isEnablingLoki || isCheckingPermissions}
+                  onClick={async () => {
+                    setIsEnablingLoki(true);
+                    setEnableLokiError(null);
+                    try {
+                      await enableLoki();
+                      setEnableLokiSuccess(true);
+                    } catch (err) {
+                      setEnableLokiError(
+                        err instanceof Error
+                          ? err.message
+                          : t('An error occurred while enabling Loki.')
+                      );
+                    } finally {
+                      setIsEnablingLoki(false);
+                    }
+                  }}
+                >
+                  {isEnablingLoki ? (
+                    <CircularProgress size={20} color="inherit" aria-label={t('Enabling service')} />
+                  ) : (
+                    t('Enable Service')
+                  )}
+                </Button>
+              </Box>
+            )}
+          </Box>
         )}
 
         {lokiState === LokiState.INSTALLED && (
