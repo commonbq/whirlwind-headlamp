@@ -508,20 +508,15 @@ export const useSidebarItems = (sidebarName: string = DefaultSidebars.IN_CLUSTER
     });
 
     inClusterItems.push({
-      name: 'minio',
-      label: 'MinIO',
+      name: 'seaweedfs',
+      label: 'SeaweedFS',
       icon: 'mdi:bucket',
-      url: createRouteURL('minioTenants'),
+      url: createRouteURL('seaweedfsClusters'),
       subList: [
         {
-          name: 'minioTenants',
-          label: 'Tenants',
-          url: createRouteURL('minioTenants'),
-        },
-        {
-          name: 'minioPolicyBindings',
-          label: 'Policy Bindings',
-          url: createRouteURL('minioPolicyBindings'),
+          name: 'seaweedfsClusters',
+          label: 'Clusters',
+          url: createRouteURL('seaweedfsClusters'),
         },
       ],
     });

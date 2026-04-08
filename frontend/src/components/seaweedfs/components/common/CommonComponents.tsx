@@ -16,24 +16,23 @@
 
 import { Alert, Box, Button, CircularProgress, Link as MuiLink, Typography } from '@mui/material';
 import React from 'react';
-import { useEnableMinio } from '../../hooks/useEnableMinio';
+import { useEnableSeaweedFS } from '../../hooks/useEnableSeaweedFS';
 
 interface NotInstalledBannerProps {
   isLoading?: boolean;
   /**
-   * The cluster(s) on which to check permissions and enable MinIO.
+   * The cluster(s) on which to check permissions and enable SeaweedFS.
    * When multiple clusters are provided, only the first one is used for the
    * cluster-admin check and installation target.
    */
   clusters?: string[];
 }
 
-const SUCCESS_MESSAGE =
-  'MinIO Operator has been installed and is ready to use.';
+const SUCCESS_MESSAGE = 'SeaweedFS Operator has been installed and is ready to use.';
 
 export function NotInstalledBanner({ isLoading = false, clusters }: NotInstalledBannerProps) {
   const cluster = clusters && clusters.length > 0 ? clusters[0] : undefined;
-  const { isClusterAdmin, isCheckingPermissions, enableMinio } = useEnableMinio(cluster);
+  const { isClusterAdmin, isCheckingPermissions, enableSeaweedFS } = useEnableSeaweedFS(cluster);
 
   const [isEnabling, setIsEnabling] = React.useState(false);
   const [enableError, setEnableError] = React.useState<string | null>(null);
@@ -43,11 +42,11 @@ export function NotInstalledBanner({ isLoading = false, clusters }: NotInstalled
     setIsEnabling(true);
     setEnableError(null);
     try {
-      await enableMinio();
+      await enableSeaweedFS();
       setEnableSuccess(true);
     } catch (err) {
       setEnableError(
-        err instanceof Error ? err.message : 'An error occurred while enabling MinIO.'
+        err instanceof Error ? err.message : 'An error occurred while enabling SeaweedFS.'
       );
     } finally {
       setIsEnabling(false);
@@ -77,19 +76,19 @@ export function NotInstalledBanner({ isLoading = false, clusters }: NotInstalled
         }}
       >
         <Typography variant="h5">
-          MinIO Operator was not detected on your cluster. If you haven't already, please install
-          it.
+          SeaweedFS Operator was not detected on your cluster. If you haven't already, please
+          install it.
         </Typography>
         <Typography>
           Learn how to{' '}
           <MuiLink
-            href="https://min.io/docs/minio/kubernetes/upstream/operations/installation.html"
+            href="https://github.com/seaweedfs/seaweedfs-operator"
             target="_blank"
             rel="noopener noreferrer"
           >
             install
           </MuiLink>{' '}
-          MinIO Operator
+          SeaweedFS Operator
         </Typography>
 
         {/* Outcome messages */}

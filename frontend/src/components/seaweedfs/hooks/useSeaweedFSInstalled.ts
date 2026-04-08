@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-import { request } from '../../lib/k8s/apiProxy';
+import { useEffect, useState } from 'react';
+import { isSeaweedFSInstalled } from '../isSeaweedFSInstalled';
 
-export async function isMinioInstalled(): Promise<boolean> {
-  try {
-    const response = await request('/apis/minio.min.io/v2', {
-      method: 'GET',
-    });
-    return !!response;
-  } catch (error) {
-    console.error('MinIO installation check failed:', error);
-    return false;
-  }
+export function useSeaweedFSInstalled() {
+  const [isInstalled, setIsInstalled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    async function checkSeaweedFSInstalled() {
+      const installed = await isSeaweedFSInstalled();
+      setIsInstalled(installed);
+    }
+    checkSeaweedFSInstalled();
+  }, []);
+
+  return {
+    isSeaweedFSInstalled: isInstalled,
+    isSeaweedFSCheckLoading: isInstalled === null,
+  };
 }
