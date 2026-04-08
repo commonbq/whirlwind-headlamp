@@ -18,7 +18,6 @@ import { Icon } from '@iconify/react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Select from '@mui/material/Select';
@@ -29,7 +28,15 @@ import { useTranslation } from 'react-i18next';
 import { useCluster } from '../../../../lib/k8s';
 import { KubeObject } from '../../../../lib/k8s/KubeObject';
 import { Loader, SectionBox } from '../../../common';
-import { useEnableLoki } from '../../hooks/useEnableLoki';
+import { EditorDialog } from '../../../app-catalog/components/charts/EditorDialog';
+import {
+  LOKI_HELM_VALUES,
+  LOKI_NAMESPACE,
+  LOKI_RELEASE_NAME,
+  LOKI_REPOSITORY_NAME,
+  LOKI_REPOSITORY_URL,
+  useEnableLoki,
+} from '../../hooks/useEnableLoki';
 import { fetchLokiLogs, LokiResponse, LokiStream } from '../../request';
 import {
   getConfigStore,
@@ -38,6 +45,16 @@ import {
   getLokiSubPath,
   getLokiTimespan,
 } from '../../util';
+
+/** Synthetic chart object used to open EditorDialog for Loki installation. */
+const LOKI_CHART_FOR_EDITOR = {
+  name: LOKI_RELEASE_NAME,
+  repository: {
+    name: LOKI_REPOSITORY_NAME,
+    url: LOKI_REPOSITORY_URL,
+  },
+  version: '',
+};
 
 interface LokiLogsViewerProps {
   resource: KubeObject;
@@ -98,12 +115,8 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
   const useClusterConfig = configStore.useConfig();
   const clusterConfig = useClusterConfig();
 
-  const { isClusterAdmin, isCheckingPermissions, enableLoki } = useEnableLoki(
-    clusterName ?? undefined
-  );
-  const [isEnablingLoki, setIsEnablingLoki] = useState(false);
-  const [enableLokiError, setEnableLokiError] = useState<string | null>(null);
-  const [enableLokiSuccess, setEnableLokiSuccess] = useState(false);
+  const { isClusterAdmin, isCheckingPermissions } = useEnableLoki(clusterName ?? undefined);
+  const [lokiEditorOpen, setLokiEditorOpen] = useState(false);
 
   const [lokiState, setLokiState] = useState<LokiState>(LokiState.LOADING);
   const [lokiPrefix, setLokiPrefix] = useState<string | null>(null);
@@ -253,45 +266,27 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
                 "Loki was not detected in your cluster. Enable Loki logs in the plugin settings and provide the service address."
               )}
             </Alert>
-            {enableLokiSuccess && (
-              <Alert severity="success">
-                {t('Loki has been installed and is ready to use.')}
-              </Alert>
-            )}
-            {enableLokiError && <Alert severity="error">{enableLokiError}</Alert>}
-            {isClusterAdmin && !enableLokiSuccess && (
+            {isClusterAdmin && (
               <Box>
                 <Button
                   variant="contained"
                   color="primary"
-                  disabled={isEnablingLoki || isCheckingPermissions}
-                  onClick={async () => {
-                    setIsEnablingLoki(true);
-                    setEnableLokiError(null);
-                    try {
-                      await enableLoki();
-                      setEnableLokiSuccess(true);
-                    } catch (err) {
-                      setEnableLokiError(
-                        err instanceof Error
-                          ? err.message
-                          : t('An error occurred while enabling Loki.')
-                      );
-                    } finally {
-                      setIsEnablingLoki(false);
-                    }
-                  }}
+                  disabled={isCheckingPermissions}
+                  onClick={() => setLokiEditorOpen(true)}
                 >
-                  {isEnablingLoki ? (
-                    <Box role="status" aria-live="polite" display="flex" alignItems="center">
-                      <CircularProgress size={20} color="inherit" aria-label={t('Enabling service')} />
-                    </Box>
-                  ) : (
-                    t('Enable Service')
-                  )}
+                  {t('Enable Service')}
                 </Button>
               </Box>
             )}
+            <EditorDialog
+              openEditor={lokiEditorOpen}
+              chart={LOKI_CHART_FOR_EDITOR}
+              handleEditor={setLokiEditorOpen}
+              chartProfile="loki"
+              initialValues={LOKI_HELM_VALUES}
+              initialReleaseName={LOKI_RELEASE_NAME}
+              initialNamespace={LOKI_NAMESPACE}
+            />
           </Box>
         )}
 

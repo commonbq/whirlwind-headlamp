@@ -20,10 +20,10 @@ import { clusterRequest } from '../../../lib/k8s/apiProxy';
 import ClusterRoleBinding from '../../../lib/k8s/clusterRoleBinding';
 import { useAuthorization } from '../../knative/hooks/useAuthorization';
 
-const LOKI_RELEASE_NAME = 'loki';
-const LOKI_NAMESPACE = 'loki';
-const LOKI_REPOSITORY_NAME = 'grafana';
-const LOKI_REPOSITORY_URL = 'https://grafana.github.io/helm-charts';
+export const LOKI_RELEASE_NAME = 'loki';
+export const LOKI_NAMESPACE = 'loki';
+export const LOKI_REPOSITORY_NAME = 'grafana';
+export const LOKI_REPOSITORY_URL = 'https://grafana.github.io/helm-charts';
 const LOKI_CHART = `${LOKI_REPOSITORY_NAME}/loki`;
 
 const HELM_POLL_INTERVAL_MS = 5000;
@@ -33,7 +33,7 @@ const HELM_POLL_MAX_ATTEMPTS = 60;
 // without authentication. Bucket names are required by the chart even for
 // filesystem storage (they are used as local directory names).
 // useTestSchema skips the schema_config validation that the chart enforces.
-const LOKI_HELM_VALUES = `loki:
+export const LOKI_HELM_VALUES = `loki:
   auth_enabled: false
   useTestSchema: true
   commonConfig:
