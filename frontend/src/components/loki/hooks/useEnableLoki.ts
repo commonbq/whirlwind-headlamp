@@ -32,8 +32,10 @@ const HELM_POLL_MAX_ATTEMPTS = 60;
 // Minimal values for a single-binary Loki deployment using filesystem storage,
 // without authentication. Bucket names are required by the chart even for
 // filesystem storage (they are used as local directory names).
+// useTestSchema skips the schema_config validation that the chart enforces.
 const LOKI_HELM_VALUES = `loki:
   auth_enabled: false
+  useTestSchema: true
   commonConfig:
     replication_factor: 1
   storage:
