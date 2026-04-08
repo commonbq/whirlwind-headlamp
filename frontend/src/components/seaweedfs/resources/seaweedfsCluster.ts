@@ -54,6 +54,7 @@ export interface SeaweedFSClusterInterface extends KubeObjectInterface {
 }
 
 export class SeaweedFSCluster extends KubeObject<SeaweedFSClusterInterface> {
+  // The kind name 'Seaweedfs' matches the actual SeaweedFS Operator CRD kind exactly.
   static kind = 'Seaweedfs';
   static apiName = 'seaweedfs';
   static apiVersion = 'seaweedfs.com/v1';
@@ -66,7 +67,6 @@ export class SeaweedFSCluster extends KubeObject<SeaweedFSClusterInterface> {
       namespace: '',
     };
     baseObject.spec = {
-      image: 'chrislusf/seaweedfs:latest',
       master: {
         replicas: 1,
         storage: '4Gi',
