@@ -129,14 +129,6 @@ function EditorDialogInner({
   }
 
   useEffect(() => {
-    if (initialValues !== undefined) {
-      // Pre-filled mode: skip API fetches and use a synthetic "latest" version entry.
-      const syntheticVersion = { title: 'latest', value: '' };
-      setVersions([syntheticVersion]);
-      setSelectedVersion(syntheticVersion);
-      setChartInstallDescription(`${chart.name} deployment`);
-      return;
-    }
     if (chartCfg.chartProfile === chartProfile) {
       const versionsArray =
         globalThis.AVAILABLE_VERSIONS instanceof Map && chart.name
@@ -164,6 +156,7 @@ function EditorDialogInner({
           setVersions(availableVersions);
           setSelectedVersion(availableVersions[0]);
         }
+        setChartInstallDescription(`${chart.name} deployment`);
       });
     }
   }, [chart]);
