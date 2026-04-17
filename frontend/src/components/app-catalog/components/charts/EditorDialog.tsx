@@ -40,6 +40,12 @@ type EditorDialogProps = {
   chart: any;
   handleEditor: (open: boolean) => void;
   chartProfile: string;
+  /** When provided, pre-fills the YAML editor and skips fetching chart values from the API. */
+  initialValues?: string;
+  /** When provided, pre-fills the Release Name field. */
+  initialReleaseName?: string;
+  /** When provided, pre-selects the namespace with this name (falls back to first available). */
+  initialNamespace?: string;
 };
 
 export function EditorDialog(props: EditorDialogProps) {
@@ -47,7 +53,15 @@ export function EditorDialog(props: EditorDialogProps) {
   return <EditorDialogInner {...props} />;
 }
 
-function EditorDialogInner({ openEditor, handleEditor, chart, chartProfile }: EditorDialogProps) {
+function EditorDialogInner({
+  openEditor,
+  handleEditor,
+  chart,
+  chartProfile,
+  initialValues,
+  initialReleaseName,
+  initialNamespace,
+}: EditorDialogProps) {
   const { t } = useTranslation();
   const [installLoading, setInstallLoading] = useState(false);
   const [namespaces] = Namespace.useList();
@@ -61,7 +75,7 @@ function EditorDialogInner({ openEditor, handleEditor, chart, chartProfile }: Ed
   const [chartInstallDescription, setChartInstallDescription] = useState('');
   const [selectedVersion, setSelectedVersion] = useState<FieldType>();
   const [selectedNamespace, setSelectedNamespace] = useState<FieldType>();
-  const [releaseName, setReleaseName] = useState('');
+  const [releaseName, setReleaseName] = useState(initialReleaseName ?? '');
   const namespaceNames = namespaces?.map(namespace => ({
     value: namespace.metadata.name,
     title: namespace.metadata.name,
@@ -75,7 +89,10 @@ function EditorDialogInner({ openEditor, handleEditor, chart, chartProfile }: Ed
 
   useEffect(() => {
     if (!selectedNamespace && !!namespaceNames) {
-      setSelectedNamespace(namespaceNames[0]);
+      const preferred = initialNamespace
+        ? namespaceNames.find(n => n.value === initialNamespace) ?? namespaceNames[0]
+        : namespaceNames[0];
+      setSelectedNamespace(preferred);
     }
   }, [selectedNamespace, namespaceNames]);
 
@@ -139,15 +156,23 @@ function EditorDialogInner({ openEditor, handleEditor, chart, chartProfile }: Ed
           setVersions(availableVersions);
           setSelectedVersion(availableVersions[0]);
         }
+        setChartInstallDescription(`${chart.name} deployment`);
       });
     }
   }, [chart]);
 
   useEffect(() => {
+    if (initialValues !== undefined) {
+      // Pre-filled mode: use initialValues directly instead of fetching from the API.
+      setChartValues(initialValues);
+      // Keep defaultChartValues as {} so the full editor content is always sent on install.
+      setDefaultChartValues({});
+      return;
+    }
     if (selectedVersion) {
       handleChartValueFetch(chart);
     }
-  }, [selectedVersion]);
+  }, [selectedVersion, initialValues]);
 
   function checkInstallStatus(releaseName: string) {
     setTimeout(() => {

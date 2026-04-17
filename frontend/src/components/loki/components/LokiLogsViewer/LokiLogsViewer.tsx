@@ -28,6 +28,15 @@ import { useTranslation } from 'react-i18next';
 import { useCluster } from '../../../../lib/k8s';
 import { KubeObject } from '../../../../lib/k8s/KubeObject';
 import { Loader, SectionBox } from '../../../common';
+import { EditorDialog } from '../../../app-catalog/components/charts/EditorDialog';
+import {
+  LOKI_HELM_VALUES,
+  LOKI_NAMESPACE,
+  LOKI_RELEASE_NAME,
+  LOKI_REPOSITORY_NAME,
+  LOKI_REPOSITORY_URL,
+  useEnableLoki,
+} from '../../hooks/useEnableLoki';
 import { fetchLokiLogs, LokiResponse, LokiStream } from '../../request';
 import {
   getConfigStore,
@@ -36,6 +45,16 @@ import {
   getLokiSubPath,
   getLokiTimespan,
 } from '../../util';
+
+/** Synthetic chart object used to open EditorDialog for Loki installation. */
+const LOKI_CHART_FOR_EDITOR = {
+  name: LOKI_RELEASE_NAME,
+  repository: {
+    name: LOKI_REPOSITORY_NAME,
+    url: LOKI_REPOSITORY_URL,
+  },
+  version: '',
+};
 
 interface LokiLogsViewerProps {
   resource: KubeObject;
@@ -95,6 +114,9 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
   const configStore = getConfigStore();
   const useClusterConfig = configStore.useConfig();
   const clusterConfig = useClusterConfig();
+
+  const { isClusterAdmin, isCheckingPermissions } = useEnableLoki(clusterName ?? undefined);
+  const [lokiEditorOpen, setLokiEditorOpen] = useState(false);
 
   const [lokiState, setLokiState] = useState<LokiState>(LokiState.LOADING);
   const [lokiPrefix, setLokiPrefix] = useState<string | null>(null);
@@ -238,11 +260,34 @@ export function LokiLogsViewer({ resource }: LokiLogsViewerProps) {
         )}
 
         {lokiState === LokiState.NOT_FOUND && (
-          <Alert severity="info">
-            {t(
-              "Loki was not detected in your cluster. Enable Loki logs in the plugin settings and provide the service address."
+          <Box display="flex" flexDirection="column" gap={1}>
+            <Alert severity="info">
+              {t(
+                "Loki was not detected in your cluster. Enable Loki logs in the plugin settings and provide the service address."
+              )}
+            </Alert>
+            {isClusterAdmin && (
+              <Box>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={isCheckingPermissions}
+                  onClick={() => setLokiEditorOpen(true)}
+                >
+                  {t('Enable Service')}
+                </Button>
+              </Box>
             )}
-          </Alert>
+            <EditorDialog
+              openEditor={lokiEditorOpen}
+              chart={LOKI_CHART_FOR_EDITOR}
+              handleEditor={setLokiEditorOpen}
+              chartProfile="loki"
+              initialValues={LOKI_HELM_VALUES}
+              initialReleaseName={LOKI_RELEASE_NAME}
+              initialNamespace={LOKI_NAMESPACE}
+            />
+          </Box>
         )}
 
         {lokiState === LokiState.INSTALLED && (
