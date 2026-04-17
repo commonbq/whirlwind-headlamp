@@ -20,10 +20,10 @@ import { clusterRequest } from '../../../lib/k8s/apiProxy';
 import ClusterRoleBinding from '../../../lib/k8s/clusterRoleBinding';
 import { useAuthorization } from '../../knative/hooks/useAuthorization';
 
-const SEAWEEDFS_OPERATOR_RELEASE_NAME = 'seaweedfs-operator';
-const SEAWEEDFS_OPERATOR_NAMESPACE = 'seaweedfs-operator';
-const SEAWEEDFS_OPERATOR_REPOSITORY_NAME = 'seaweedfs-operator';
-const SEAWEEDFS_OPERATOR_REPOSITORY_URL = 'https://seaweedfs.github.io/seaweedfs-operator';
+export const SEAWEEDFS_OPERATOR_RELEASE_NAME = 'seaweedfs-operator';
+export const SEAWEEDFS_OPERATOR_NAMESPACE = 'seaweedfs-operator';
+export const SEAWEEDFS_OPERATOR_REPOSITORY_NAME = 'seaweedfs-operator';
+export const SEAWEEDFS_OPERATOR_REPOSITORY_URL = 'https://seaweedfs.github.io/seaweedfs-operator';
 const SEAWEEDFS_OPERATOR_CHART = `${SEAWEEDFS_OPERATOR_REPOSITORY_NAME}/seaweedfs-operator`;
 
 const SEAWEEDFS_CRD_NAME = 'seaweedfs.seaweedfs.com';
