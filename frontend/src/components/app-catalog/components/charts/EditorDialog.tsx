@@ -110,7 +110,10 @@ function EditorDialogInner({
   }
 
   function handleChartValueFetch(chart: any) {
-    const packageID = chartCfg.chartProfile === chartProfile ? chart.name : chart.package_id;
+    const packageID =
+      chartCfg.chartProfile === chartProfile
+        ? chart.name
+        : (chart.package_id ?? `helm/${chart.repository?.name}/${chart.name}`);
     const packageVersion = selectedVersion?.value ?? chart.version;
     setChartValuesLoading(true);
     fetchChartValues(packageID, packageVersion)
