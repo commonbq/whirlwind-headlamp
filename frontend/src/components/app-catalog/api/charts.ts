@@ -131,14 +131,24 @@ export function fetchChartValues(packageID: string, packageVersion: string) {
       headers: {
         'Forward-To': `https://artifacthub.io/api/v1/packages/${packageID}/${packageVersion}/values`,
       },
-    }).then(response => response.text());
+    }).then(response => {
+      if (!response.ok || (response.headers.get('Content-Type') ?? '').includes('text/html')) {
+        return Promise.reject(new Error(`Failed to fetch chart values (HTTP ${response.status})`));
+      }
+      return response.text();
+    });
   }
 
   return fetch(`http://localhost:4466/externalproxy`, {
     headers: {
       'Forward-To': `https://artifacthub.io/api/v1/packages/${packageID}/${packageVersion}/values`,
     },
-  }).then(response => response.text());
+  }).then(response => {
+    if (!response.ok || (response.headers.get('Content-Type') ?? '').includes('text/html')) {
+      return Promise.reject(new Error(`Failed to fetch chart values (HTTP ${response.status})`));
+    }
+    return response.text();
+  });
 }
 
 export async function fetchChartIcon(iconName: string) {
