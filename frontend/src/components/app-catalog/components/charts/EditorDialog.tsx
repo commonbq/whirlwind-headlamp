@@ -75,6 +75,7 @@ function EditorDialogInner({
   const [chartInstallDescription, setChartInstallDescription] = useState('');
   const [selectedVersion, setSelectedVersion] = useState<FieldType>();
   const [selectedNamespace, setSelectedNamespace] = useState<FieldType>();
+  const [artifactPackageId, setArtifactPackageId] = useState<string | undefined>(undefined);
   const [releaseName, setReleaseName] = useState(initialReleaseName ?? '');
   const namespaceNames = namespaces?.map(namespace => ({
     value: namespace.metadata.name,
@@ -110,7 +111,10 @@ function EditorDialogInner({
   }
 
   function handleChartValueFetch(chart: any) {
-    const packageID = chartCfg.chartProfile === chartProfile ? chart.name : chart.package_id;
+    const packageID =
+      chartCfg.chartProfile === chartProfile
+        ? chart.name
+        : (chart.package_id ?? artifactPackageId);
     const packageVersion = selectedVersion?.value ?? chart.version;
     setChartValuesLoading(true);
     fetchChartValues(packageID, packageVersion)
@@ -146,6 +150,9 @@ function EditorDialogInner({
       setSelectedVersion(availableVersions[0]);
     } else {
       fetchChartDetailFromArtifact(chart.name, chart.repository.name).then(response => {
+        if (response.package_id) {
+          setArtifactPackageId(response.package_id);
+        }
         if (response.available_versions) {
           const availableVersions = response.available_versions.map(
             ({ version }: { version: string }) => ({

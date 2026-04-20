@@ -192,17 +192,11 @@ const LazyOrderDetail = React.lazy(() =>
   import('../../components/cert-manager').then(m => ({ default: m.OrderDetail }))
 );
 
-const LazyMinioTenantsList = React.lazy(() =>
-  import('../../components/minio').then(m => ({ default: m.TenantsList }))
+const LazySeaweedFSClustersList = React.lazy(() =>
+  import('../../components/seaweedfs').then(m => ({ default: m.ClustersList }))
 );
-const LazyMinioTenantDetail = React.lazy(() =>
-  import('../../components/minio').then(m => ({ default: m.TenantDetail }))
-);
-const LazyMinioPolicyBindingsList = React.lazy(() =>
-  import('../../components/minio').then(m => ({ default: m.PolicyBindingsList }))
-);
-const LazyMinioPolicyBindingDetail = React.lazy(() =>
-  import('../../components/minio').then(m => ({ default: m.PolicyBindingDetail }))
+const LazySeaweedFSClusterDetail = React.lazy(() =>
+  import('../../components/seaweedfs').then(m => ({ default: m.ClusterDetail }))
 );
 
 const LazyChartsList = React.lazy(() =>
@@ -1190,44 +1184,31 @@ const defaultRoutes: { [routeName: string]: Route } = {
     sidebar: 'certManagerIssuers',
     component: () => <LazyIssuerDetail />,
   },
-  minio: {
-    path: '/minio',
+  seaweedfs: {
+    path: '/seaweedfs',
     exact: true,
-    name: 'minio',
-    sidebar: 'minioTenants',
+    name: 'seaweedfs',
+    sidebar: 'seaweedfsClusters',
     component: () => {
       const history = useHistory();
       React.useEffect(() => {
-        history.replace(createRouteURL('minioTenants'));
+        history.replace(createRouteURL('seaweedfsClusters'));
       }, [history]);
       return <></>;
     },
   },
-  minioTenants: {
-    path: '/minio/tenants',
+  seaweedfsClusters: {
+    path: '/seaweedfs/clusters',
     exact: true,
-    name: 'Tenants',
-    sidebar: 'minioTenants',
-    component: () => <LazyMinioTenantsList />,
+    name: 'Clusters',
+    sidebar: 'seaweedfsClusters',
+    component: () => <LazySeaweedFSClustersList />,
   },
-  minioTenantDetails: {
-    path: '/minio/tenants/:namespace/:name',
+  seaweedfsClusterDetails: {
+    path: '/seaweedfs/clusters/:namespace/:name',
     exact: true,
-    sidebar: 'minioTenants',
-    component: () => <LazyMinioTenantDetail />,
-  },
-  minioPolicyBindings: {
-    path: '/minio/policybindings',
-    exact: true,
-    name: 'Policy Bindings',
-    sidebar: 'minioPolicyBindings',
-    component: () => <LazyMinioPolicyBindingsList />,
-  },
-  minioPolicyBindingDetails: {
-    path: '/minio/policybindings/:namespace/:name',
-    exact: true,
-    sidebar: 'minioPolicyBindings',
-    component: () => <LazyMinioPolicyBindingDetail />,
+    sidebar: 'seaweedfsClusters',
+    component: () => <LazySeaweedFSClusterDetail />,
   },
   appCatalog: {
     path: '/apps',

@@ -20,13 +20,13 @@ import { clusterRequest } from '../../../lib/k8s/apiProxy';
 import ClusterRoleBinding from '../../../lib/k8s/clusterRoleBinding';
 import { useAuthorization } from '../../knative/hooks/useAuthorization';
 
-const MINIO_OPERATOR_RELEASE_NAME = 'minio-operator';
-const MINIO_OPERATOR_NAMESPACE = 'minio-operator';
-const MINIO_OPERATOR_REPOSITORY_NAME = 'minio-operator';
-const MINIO_OPERATOR_REPOSITORY_URL = 'https://operator.min.io';
-const MINIO_OPERATOR_CHART = `${MINIO_OPERATOR_REPOSITORY_NAME}/operator`;
+export const SEAWEEDFS_OPERATOR_RELEASE_NAME = 'seaweedfs-operator';
+export const SEAWEEDFS_OPERATOR_NAMESPACE = 'seaweedfs-operator';
+export const SEAWEEDFS_OPERATOR_REPOSITORY_NAME = 'seaweedfs-operator';
+export const SEAWEEDFS_OPERATOR_REPOSITORY_URL = 'https://seaweedfs.github.io/seaweedfs-operator';
+const SEAWEEDFS_OPERATOR_CHART = `${SEAWEEDFS_OPERATOR_REPOSITORY_NAME}/seaweedfs-operator`;
 
-const MINIO_TENANT_CRD_NAME = 'tenants.minio.min.io';
+const SEAWEEDFS_CRD_NAME = 'seaweedfs.seaweedfs.com';
 
 const HELM_POLL_INTERVAL_MS = 5000;
 const HELM_POLL_MAX_ATTEMPTS = 60;
@@ -57,7 +57,7 @@ async function pollHelmStatus(cluster: string, releaseName: string, action: stri
       throw new Error(
         result.message ||
           `Helm installation failed for release "${releaseName}". ` +
-            `Inspect the failure with: helm status ${releaseName} -n ${MINIO_OPERATOR_NAMESPACE}`
+            `Inspect the failure with: helm status ${releaseName} -n ${SEAWEEDFS_OPERATOR_NAMESPACE}`
       );
     }
     if (status !== 'processing') {
@@ -70,7 +70,7 @@ async function pollHelmStatus(cluster: string, releaseName: string, action: stri
   }
 
   throw new Error(
-    'MinIO Operator installation timed out. Check the Helm release status in your cluster.'
+    'SeaweedFS Operator installation timed out. Check the Helm release status in your cluster.'
   );
 }
 
@@ -105,7 +105,8 @@ async function ensureOperatorRepository(cluster: string): Promise<void> {
 
   const hasRepository = response.repositories?.some(
     repo =>
-      repo.name === MINIO_OPERATOR_REPOSITORY_NAME && repo.url === MINIO_OPERATOR_REPOSITORY_URL
+      repo.name === SEAWEEDFS_OPERATOR_REPOSITORY_NAME &&
+      repo.url === SEAWEEDFS_OPERATOR_REPOSITORY_URL
   );
 
   if (hasRepository) {
@@ -115,8 +116,8 @@ async function ensureOperatorRepository(cluster: string): Promise<void> {
   await clusterRequest('/helm/repositories', {
     method: 'POST',
     body: JSON.stringify({
-      name: MINIO_OPERATOR_REPOSITORY_NAME,
-      url: MINIO_OPERATOR_REPOSITORY_URL,
+      name: SEAWEEDFS_OPERATOR_REPOSITORY_NAME,
+      url: SEAWEEDFS_OPERATOR_REPOSITORY_URL,
     }),
     headers: { ...JSON_HEADERS, ...getHeadlampAPIHeaders() },
     cluster,
@@ -126,8 +127,8 @@ async function ensureOperatorRepository(cluster: string): Promise<void> {
 async function ensureOperatorInstalled(cluster: string): Promise<void> {
   const existingRelease = await getHelmRelease(
     cluster,
-    MINIO_OPERATOR_RELEASE_NAME,
-    MINIO_OPERATOR_NAMESPACE
+    SEAWEEDFS_OPERATOR_RELEASE_NAME,
+    SEAWEEDFS_OPERATOR_NAMESPACE
   );
 
   if (existingRelease) {
@@ -137,10 +138,10 @@ async function ensureOperatorInstalled(cluster: string): Promise<void> {
   await clusterRequest('/helm/release/install', {
     method: 'POST',
     body: JSON.stringify({
-      name: MINIO_OPERATOR_RELEASE_NAME,
-      namespace: MINIO_OPERATOR_NAMESPACE,
-      description: 'MinIO Operator installation via Headlamp',
-      chart: MINIO_OPERATOR_CHART,
+      name: SEAWEEDFS_OPERATOR_RELEASE_NAME,
+      namespace: SEAWEEDFS_OPERATOR_NAMESPACE,
+      description: 'SeaweedFS Operator installation via Headlamp',
+      chart: SEAWEEDFS_OPERATOR_CHART,
       version: '',
       values: '',
       createNamespace: true,
@@ -150,7 +151,7 @@ async function ensureOperatorInstalled(cluster: string): Promise<void> {
     cluster,
   });
 
-  await pollHelmStatus(cluster, MINIO_OPERATOR_RELEASE_NAME, 'install');
+  await pollHelmStatus(cluster, SEAWEEDFS_OPERATOR_RELEASE_NAME, 'install');
 }
 
 async function waitForCrd(cluster: string, crdName: string): Promise<void> {
@@ -178,25 +179,25 @@ async function waitForCrd(cluster: string, crdName: string): Promise<void> {
 async function installViaHelm(cluster: string): Promise<void> {
   await ensureOperatorRepository(cluster);
   await ensureOperatorInstalled(cluster);
-  await waitForCrd(cluster, MINIO_TENANT_CRD_NAME);
+  await waitForCrd(cluster, SEAWEEDFS_CRD_NAME);
 }
 
 /**
- * Provides a one-click "Enable Service" flow for cluster-admins when MinIO
+ * Provides a one-click "Enable Service" flow for cluster-admins when SeaweedFS
  * Operator is not detected. Uses the headlamp-server Helm controller to install
- * the MinIO Operator and waits for its CRDs to become available.
+ * the SeaweedFS Operator and waits for its CRDs to become available.
  *
  * Exposes:
  * - `isClusterAdmin`        – true when the user can create ClusterRoleBindings
  * - `isCheckingPermissions` – true while the permission check is in flight
- * - `enableMinio()`         – triggers the Helm installation and polls for completion
+ * - `enableSeaweedFS()`     – triggers the Helm installation and polls for completion
  *
- * @param cluster – The cluster to check permissions for and install MinIO on.
+ * @param cluster – The cluster to check permissions for and install SeaweedFS on.
  */
-export function useEnableMinio(cluster?: string): {
+export function useEnableSeaweedFS(cluster?: string): {
   isClusterAdmin: boolean | null;
   isCheckingPermissions: boolean;
-  enableMinio: () => Promise<void>;
+  enableSeaweedFS: () => Promise<void>;
 } {
   const { allowed: isClusterAdmin, isLoading: isCheckingPermissions } = useAuthorization({
     item: ClusterRoleBinding,
@@ -204,10 +205,10 @@ export function useEnableMinio(cluster?: string): {
     cluster,
   });
 
-  async function enableMinio() {
+  async function enableSeaweedFS() {
     if (!cluster) throw new Error('No cluster selected.');
     return installViaHelm(cluster);
   }
 
-  return { isClusterAdmin, isCheckingPermissions, enableMinio };
+  return { isClusterAdmin, isCheckingPermissions, enableSeaweedFS };
 }

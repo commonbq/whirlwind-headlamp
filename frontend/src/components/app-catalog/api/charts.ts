@@ -131,14 +131,36 @@ export function fetchChartValues(packageID: string, packageVersion: string) {
       headers: {
         'Forward-To': `https://artifacthub.io/api/v1/packages/${packageID}/${packageVersion}/values`,
       },
-    }).then(response => response.text());
+    }).then(response => {
+      if (!response.ok) {
+        return Promise.reject(new Error(`Failed to fetch chart values (HTTP ${response.status})`));
+      }
+      return response.text().then(text => {
+        const trimmed = text.trimStart();
+        if (trimmed.toLowerCase().startsWith('<!doctype') || trimmed.toLowerCase().startsWith('<html')) {
+          return Promise.reject(new Error('Failed to fetch chart values: received HTML instead of YAML'));
+        }
+        return text;
+      });
+    });
   }
 
   return fetch(`http://localhost:4466/externalproxy`, {
     headers: {
       'Forward-To': `https://artifacthub.io/api/v1/packages/${packageID}/${packageVersion}/values`,
     },
-  }).then(response => response.text());
+  }).then(response => {
+    if (!response.ok) {
+      return Promise.reject(new Error(`Failed to fetch chart values (HTTP ${response.status})`));
+    }
+    return response.text().then(text => {
+      const trimmed = text.trimStart();
+      if (trimmed.toLowerCase().startsWith('<!doctype') || trimmed.toLowerCase().startsWith('<html')) {
+        return Promise.reject(new Error('Failed to fetch chart values: received HTML instead of YAML'));
+      }
+      return text;
+    });
+  });
 }
 
 export async function fetchChartIcon(iconName: string) {

@@ -14,7 +14,16 @@
  * limitations under the License.
  */
 
-export { PolicyBindingDetail } from './components/policyBindings/Detail';
-export { PolicyBindingsList } from './components/policyBindings/List';
-export { TenantDetail } from './components/tenants/Detail';
-export { TenantsList } from './components/tenants/List';
+import { request } from '../../lib/k8s/apiProxy';
+
+export async function isSeaweedFSInstalled(): Promise<boolean> {
+  try {
+    const response = await request('/apis/seaweedfs.com/v1', {
+      method: 'GET',
+    });
+    return !!response;
+  } catch (error) {
+    console.error('SeaweedFS installation check failed:', error);
+    return false;
+  }
+}

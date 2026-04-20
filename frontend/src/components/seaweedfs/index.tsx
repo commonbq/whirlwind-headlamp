@@ -14,22 +14,5 @@
  * limitations under the License.
  */
 
-import { useEffect, useState } from 'react';
-import { isMinioInstalled } from '../isMinioInstalled';
-
-export function useMinioInstalled() {
-  const [isInstalled, setIsInstalled] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    async function checkMinioInstalled() {
-      const installed = await isMinioInstalled();
-      setIsInstalled(installed);
-    }
-    checkMinioInstalled();
-  }, []);
-
-  return {
-    isMinioInstalled: isInstalled,
-    isMinioCheckLoading: isInstalled === null,
-  };
-}
+export { ClusterDetail } from './components/clusters/Detail';
+export { ClustersList } from './components/clusters/List';

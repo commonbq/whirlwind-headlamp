@@ -22,39 +22,23 @@ import { useSelectedClusters } from '../../../../lib/k8s';
 import { Activity } from '../../../activity/Activity';
 import ActionButton from '../../../common/ActionButton';
 import { AuthVisible, EditorDialog } from '../../../common/Resource';
-import { Tenant, TENANT_ENV_SECRET_NAME } from '../../resources/tenant';
+import { SeaweedFSCluster } from '../../resources/seaweedfsCluster';
 
 function buildTemplate(): string {
-  const secret = {
-    apiVersion: 'v1',
-    kind: 'Secret',
-    metadata: {
-      name: TENANT_ENV_SECRET_NAME,
-      namespace: '',
-    },
-    type: 'Opaque',
-    stringData: {
-      // IMPORTANT: Change the values below before applying.
-      'config.env':
-        'export MINIO_ROOT_USER=minio\nexport MINIO_ROOT_PASSWORD=<change-me>\n',
-    },
-  };
-
-  const tenant = Tenant.getBaseObject();
-
-  return yaml.dump(secret) + '---\n' + yaml.dump(tenant);
+  const cluster = SeaweedFSCluster.getBaseObject();
+  return yaml.dump(cluster);
 }
 
-export function CreateTenantButton() {
+export function CreateClusterButton() {
   const { t } = useTranslation(['translation']);
   const [errorMessage, setErrorMessage] = React.useState('');
   const clusters = useSelectedClusters();
-  const activityId = 'create-resource-' + Tenant.apiName;
-  const title = t('translation|Create {{ name }}', { name: 'Tenant' });
+  const activityId = 'create-resource-' + SeaweedFSCluster.apiName;
+  const title = t('translation|Create {{ name }}', { name: 'SeaweedFS Cluster' });
   const template = React.useMemo(() => buildTemplate(), []);
 
   return (
-    <AuthVisible item={Tenant} authVerb="create">
+    <AuthVisible item={SeaweedFSCluster} authVerb="create">
       <ActionButton
         color="primary"
         description={title}
