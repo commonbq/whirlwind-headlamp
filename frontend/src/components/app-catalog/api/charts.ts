@@ -132,10 +132,16 @@ export function fetchChartValues(packageID: string, packageVersion: string) {
         'Forward-To': `https://artifacthub.io/api/v1/packages/${packageID}/${packageVersion}/values`,
       },
     }).then(response => {
-      if (!response.ok || (response.headers.get('Content-Type') ?? '').toLowerCase().startsWith('text/html')) {
+      if (!response.ok) {
         return Promise.reject(new Error(`Failed to fetch chart values (HTTP ${response.status})`));
       }
-      return response.text();
+      return response.text().then(text => {
+        const trimmed = text.trimStart();
+        if (trimmed.toLowerCase().startsWith('<!doctype') || trimmed.toLowerCase().startsWith('<html')) {
+          return Promise.reject(new Error('Failed to fetch chart values: received HTML instead of YAML'));
+        }
+        return text;
+      });
     });
   }
 
@@ -144,10 +150,16 @@ export function fetchChartValues(packageID: string, packageVersion: string) {
       'Forward-To': `https://artifacthub.io/api/v1/packages/${packageID}/${packageVersion}/values`,
     },
   }).then(response => {
-    if (!response.ok || (response.headers.get('Content-Type') ?? '').toLowerCase().startsWith('text/html')) {
+    if (!response.ok) {
       return Promise.reject(new Error(`Failed to fetch chart values (HTTP ${response.status})`));
     }
-    return response.text();
+    return response.text().then(text => {
+      const trimmed = text.trimStart();
+      if (trimmed.toLowerCase().startsWith('<!doctype') || trimmed.toLowerCase().startsWith('<html')) {
+        return Promise.reject(new Error('Failed to fetch chart values: received HTML instead of YAML'));
+      }
+      return text;
+    });
   });
 }
 
