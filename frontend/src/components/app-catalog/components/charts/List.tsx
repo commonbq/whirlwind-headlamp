@@ -444,16 +444,18 @@ export function ChartsList({ fetchCharts = fetchChartsFromArtifact }) {
                           <Typography component="h2" variant="h5">
                             {chartCfg.chartProfile === VANILLA_HELM_REPO ? (
                               chart.name
-                            ) : (
+                            ) : chart?.repository?.name ? (
                               <Link
                                 routeName="appCatalogChartDetail"
                                 params={{
                                   chartName: chart.name,
-                                  repoName: chart?.repository?.name,
+                                  repoName: chart.repository.name,
                                 }}
                               >
                                 {chart.name}
                               </Link>
+                            ) : (
+                              chart.name
                             )}
                           </Typography>
                         </Tooltip>
